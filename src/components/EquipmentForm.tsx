@@ -1,0 +1,125 @@
+"use client";
+
+import { useState } from "react";
+
+interface EquipmentItem {
+  _id: string;
+  name: string;
+  type: "gear" | "special";
+  createdAt: string;
+}
+
+interface EquipmentFormProps {
+  equipment?: EquipmentItem | null;
+  onSave: () => void;
+  onCancel: () => void;
+}
+
+export default function EquipmentForm({
+  equipment,
+  onSave,
+  onCancel,
+}: EquipmentFormProps) {
+  const isEditing = !!equipment;
+  const [name, setName] = useState(equipment?.name || "");
+  const [type, setType] = useState<"gear" | "special">(
+    equipment?.type || "gear",
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const url = isEditing
+        ? `/api/equipment/${equipment._id}`
+        : "/api/equipment";
+      const method = isEditing ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, type }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to save equipment");
+      }
+
+      onSave();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-game-card border border-game-border rounded w-full max-w-md">
+        <div className="px-6 py-4 border-b border-game-border">
+          <h3 className="text-lg font-semibold text-game-accent">
+            {isEditing ? "✏️ Edit Equipment" : "➕ Add Equipment"}
+          </h3>
+        </div>
+
+        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
+          {error && (
+            <div className="bg-game-danger/10 border border-game-danger/30 text-game-danger p-3 rounded text-sm">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-game-text-muted mb-1">
+              Name *
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full bg-game-darker border border-game-border rounded px-3 py-2 text-sm text-game-text focus:outline-none focus:border-game-accent placeholder-game-text-muted"
+              placeholder="Equipment name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-game-text-muted mb-1">
+              Type *
+            </label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value as "gear" | "special")}
+              className="w-full bg-game-darker border border-game-border rounded px-3 py-2 text-sm text-game-text focus:outline-none focus:border-game-accent"
+            >
+              <option value="gear">⚙️ Gear</option>
+              <option value="special">✨ Special</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-game-border">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 text-sm font-medium text-game-text-muted bg-game-darker border border-game-border rounded hover:bg-game-card-hover transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-4 py-2 text-sm font-medium text-white bg-game-accent rounded hover:bg-game-accent-hover disabled:opacity-50 transition-colors"
+            >
+              {loading ? "Saving..." : isEditing ? "Update" : "Add"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

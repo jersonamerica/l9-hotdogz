@@ -1,0 +1,98 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import connectDB from "@/lib/db";
+import { User } from "@/models/User";
+import "@/models/Equipment";
+import { logActivity } from "@/lib/activityLogger";
+
+// GET current user profile
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    await connectDB();
+    const user = await User.findById(session.user.id)
+      .select("name email image cp mastery gearLog role isOnboarded")
+      .populate("gearLog.equipment", "name type")
+      .lean();
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Filter out gear log entries where equipment was deleted
+    const filteredUser = {
+      ...user,
+      gearLog: (user.gearLog || []).filter((entry) => entry.equipment != null),
+    };
+
+    return NextResponse.json(filteredUser);
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch user" },
+      { status: 500 },
+    );
+  }
+}
+
+// PUT update user profile
+export async function PUT(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    await connectDB();
+    const body = await req.json();
+
+    const updateData: Record<string, unknown> = {};
+
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.cp !== undefined) updateData.cp = Number(body.cp);
+    if (body.mastery !== undefined) updateData.mastery = body.mastery;
+    if (body.gearLog !== undefined) updateData.gearLog = body.gearLog;
+
+    const user = await User.findByIdAndUpdate(
+      session.user.id,
+      { $set: updateData },
+      { new: true, runValidators: true },
+    )
+      .select("name email image cp mastery gearLog role")
+      .populate("gearLog.equipment", "name type")
+      .lean();
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Filter out gear log entries where equipment was deleted
+    const filteredUser = {
+      ...user,
+      gearLog: (user.gearLog || []).filter((entry) => entry.equipment != null),
+    };
+
+    // Log profile updates
+    const changes = Object.keys(updateData);
+    if (changes.length > 0) {
+      await logActivity(
+        session.user.id,
+        "profile_updated",
+        `Updated ${changes.join(", ")}`,
+      );
+    }
+
+    return NextResponse.json(filteredUser);
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return NextResponse.json(
+      { error: "Failed to update user" },
+      { status: 500 },
+    );
+  }
+}

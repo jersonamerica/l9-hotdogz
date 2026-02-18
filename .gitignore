@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# seeder scripts (local only)
+/scripts
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
