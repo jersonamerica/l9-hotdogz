@@ -51,12 +51,32 @@ export async function PUT(req: NextRequest) {
     await connectDB();
     const body = await req.json();
 
-    const updateData: Record<string, unknown> = {};
+    // Fetch the current user before updating
+    const currentUser = await User.findById(session.user.id)
+      .select("name email image cp mastery gearLog role")
+      .populate("gearLog.equipment", "name type")
+      .lean();
 
+    if (!currentUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const updateData: Record<string, unknown> = {};
     if (body.name !== undefined) updateData.name = body.name;
     if (body.cp !== undefined) updateData.cp = Number(body.cp);
     if (body.mastery !== undefined) updateData.mastery = body.mastery;
     if (body.gearLog !== undefined) updateData.gearLog = body.gearLog;
+
+    // Compare old and new values, but only log property names that actually changed
+    const changedFields: string[] = [];
+    for (const key of Object.keys(updateData)) {
+      if (key === "gearLog") continue;
+      const oldValue = currentUser[key];
+      const newValue = updateData[key];
+      if (oldValue !== newValue) {
+        changedFields.push(key);
+      }
+    }
 
     const user = await User.findByIdAndUpdate(
       session.user.id,
@@ -77,13 +97,12 @@ export async function PUT(req: NextRequest) {
       gearLog: (user.gearLog || []).filter((entry) => entry.equipment != null),
     };
 
-    // Log profile updates
-    const changes = Object.keys(updateData);
-    if (changes.length > 0) {
+    // Log profile updates with property names only (if value actually changed)
+    if (changedFields.length > 0) {
       await logActivity(
         session.user.id,
         "profile_updated",
-        `Updated ${changes.join(", ")}`,
+        `Updated ${changedFields.join(", ")}`,
       );
     }
 

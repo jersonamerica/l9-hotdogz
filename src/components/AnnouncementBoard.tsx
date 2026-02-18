@@ -22,7 +22,8 @@ export default function AnnouncementBoard() {
   const { data: session } = useSession();
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
-  const { data: announcements = [], isLoading: loading } = useSWR<Announcement[]>("/api/announcements");
+  const { data: announcements = [], isLoading: loading } =
+    useSWR<Announcement[]>("/api/announcements");
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);

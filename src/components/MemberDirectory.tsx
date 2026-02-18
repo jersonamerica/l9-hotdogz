@@ -32,7 +32,11 @@ type SortKey = "name" | "cp" | "mastery" | "gearProgress";
 type SortDir = "asc" | "desc";
 
 export default function MemberDirectory() {
-  const { data: members = [], isLoading: loading, mutate } = useSWR<Member[]>("/api/members");
+  const {
+    data: members = [],
+    isLoading: loading,
+    mutate,
+  } = useSWR<Member[]>("/api/members");
 
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("cp");

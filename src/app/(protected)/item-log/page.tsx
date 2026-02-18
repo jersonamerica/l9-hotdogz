@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import Image from "next/image";
 import EquipmentList from "@/components/EquipmentList";
 
 export default async function DashboardPage() {
@@ -13,7 +14,14 @@ export default async function DashboardPage() {
       <div className="min-h-screen bg-black/60">
         <main className="w-[90%] mx-auto py-8">
           <h2 className="text-2xl font-bold text-game-text mb-6 flex items-center gap-2">
-            <span>🛡️</span> Item Log
+            <Image
+              src="/logo/intro_logo.png"
+              alt="Item Log Logo"
+              width={38}
+              height={38}
+              className="inline-block align-middle"
+            />{" "}
+            Item Log
           </h2>
           <EquipmentList
             isAdmin={(session?.user as { role?: string })?.role === "admin"}

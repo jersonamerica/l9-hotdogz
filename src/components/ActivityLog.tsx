@@ -82,7 +82,11 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function ActivityLog() {
-  const { data: activities = [], isLoading: loading, mutate } = useSWR<ActivityEntry[]>("/api/activity");
+  const {
+    data: activities = [],
+    isLoading: loading,
+    mutate,
+  } = useSWR<ActivityEntry[]>("/api/activity");
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = async () => {

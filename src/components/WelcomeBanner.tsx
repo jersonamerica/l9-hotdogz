@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface Props {
   userName?: string | null;
   ign?: string | null;
@@ -21,18 +23,24 @@ export default function WelcomeBanner({
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-xl font-bold text-game-text flex items-center gap-2">
-            <span>⚔️</span>
-            Welcome back
+            <Image
+              src="/logo/item_log_logo.png"
+              alt="Item Log Logo"
+              width={38}
+              height={38}
+              className="inline-block align-middle"
+            />
+            Welcome back,
             {displayName ? (
-              <span className="text-game-accent">{displayName}</span>
+              <span className="text-game-accent">{displayName}!</span>
             ) : null}
           </h2>
-          <p className="text-sm text-game-text-muted mt-1">
-            {`${totalMembers} guild member${totalMembers !== 1 ? "s" : ""} strong · ${avgProgress}% average gear completion`}
-          </p>
         </div>
 
         <div className="flex items-center gap-1.5">
+          <p className="text-sm text-game-text-muted mt-1">
+            {`Guild has ${avgProgress}% average gear completion`}
+          </p>
           <div className="w-32 h-3 bg-game-darker rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${

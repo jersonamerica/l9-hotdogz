@@ -63,9 +63,7 @@ export async function getStats(): Promise<StatsData> {
   const totalMembers = members.length;
   const avgCp =
     totalMembers > 0
-      ? Math.round(
-          memberStats.reduce((sum, m) => sum + m.cp, 0) / totalMembers,
-        )
+      ? Math.round(memberStats.reduce((sum, m) => sum + m.cp, 0) / totalMembers)
       : 0;
   const avgProgress =
     totalMembers > 0
@@ -83,7 +81,12 @@ export async function getStats(): Promise<StatsData> {
     for (const item of m.neededItems) {
       const id = item._id;
       if (!itemNeedCount[id]) {
-        itemNeedCount[id] = { _id: id, name: item.name, type: item.type, count: 0 };
+        itemNeedCount[id] = {
+          _id: id,
+          name: item.name,
+          type: item.type,
+          count: 0,
+        };
       }
       itemNeedCount[id].count++;
     }

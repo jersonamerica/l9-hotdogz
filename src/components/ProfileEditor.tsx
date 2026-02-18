@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import useSWR, { mutate } from "swr";
 import { MASTERY_OPTIONS, MASTERY_IMAGES } from "@/lib/constants";
+import Image from "next/image";
 
 interface PopulatedEquipment {
   _id: string;
@@ -39,8 +40,10 @@ interface UserProfile {
 }
 
 export default function ProfileEditor() {
-  const { data: profileData, isLoading: profileLoading } = useSWR<UserProfile>("/api/user");
-  const { data: equipmentData, isLoading: eqLoading } = useSWR<EquipmentItem[]>("/api/equipment");
+  const { data: profileData, isLoading: profileLoading } =
+    useSWR<UserProfile>("/api/user");
+  const { data: equipmentData, isLoading: eqLoading } =
+    useSWR<EquipmentItem[]>("/api/equipment");
   const loading = profileLoading || eqLoading;
   const equipment = equipmentData || [];
 
@@ -476,7 +479,14 @@ export default function ProfileEditor() {
       {/* Gear Log */}
       <div>
         <h3 className="text-lg font-semibold text-game-text mb-4 flex items-center gap-2">
-          🎒 Item Log
+          <Image
+            src="/logo/intro_logo.png"
+            alt="Item Log Logo"
+            width={38}
+            height={38}
+            className="inline-block align-middle"
+          />{" "}
+          Item Log
           <span className="text-sm font-normal text-game-text-muted">
             ({gearLog.length} items)
           </span>

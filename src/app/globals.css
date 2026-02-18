@@ -15,17 +15,17 @@
   --color-game-card: #141414;
   --color-game-card-hover: #1a1a1a;
   --color-game-border: #262626;
-  --color-game-accent: #F59E0B;
-  --color-game-accent-hover: #FBBF24;
-  --color-game-accent-muted: #B45309;
-  --color-game-gold: #F59E0B;
-  --color-game-gold-hover: #FBBF24;
+  --color-game-accent: #f59e0b;
+  --color-game-accent-hover: #fbbf24;
+  --color-game-accent-muted: #b45309;
+  --color-game-gold: #f59e0b;
+  --color-game-gold-hover: #fbbf24;
   --color-game-text: #d4d4d4;
   --color-game-text-muted: #737373;
   --color-game-success: #22c55e;
   --color-game-danger: #dc2626;
   --color-game-danger-hover: #ef4444;
-  --color-game-gear: #F59E0B;
+  --color-game-gear: #f59e0b;
   --color-game-special: #f97316;
   --color-game-nav: #0f0f0f;
 }

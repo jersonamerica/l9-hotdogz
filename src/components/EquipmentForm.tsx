@@ -88,18 +88,34 @@ export default function EquipmentForm({
             />
           </div>
 
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium text-game-text-muted mb-1">
               Type *
             </label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value as "gear" | "special")}
-              className="w-full bg-game-darker border border-game-border rounded px-3 py-2 text-sm text-game-text focus:outline-none focus:border-game-accent"
+              className="w-full bg-game-darker border border-game-border rounded px-3 py-2 pr-10 text-sm text-game-text focus:outline-none focus:border-game-accent appearance-none"
             >
               <option value="gear">⚙️ Gear</option>
               <option value="special">✨ Special</option>
             </select>
+            {/* Custom dropdown arrow */}
+            <span className="pointer-events-none absolute top-9 right-4 flex items-center">
+              <svg
+                className="w-5 h-5 text-game-text-muted"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </span>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-game-border">
