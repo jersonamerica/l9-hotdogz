@@ -195,20 +195,7 @@ export default function AnnouncementBoard() {
                 ann.pinned ? "border-l-2 border-game-accent" : ""
               }`}
             >
-              {/* Avatar */}
-              <div className="flex-shrink-0 mt-0.5">
-                {ann.createdBy?.image ? (
-                  <img
-                    src={ann.createdBy.image}
-                    alt={ann.createdBy.name}
-                    className="w-7 h-7 rounded-full border border-game-border"
-                  />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-game-darker border border-game-border flex items-center justify-center text-xs text-game-text-muted">
-                    {ann.createdBy?.name?.[0]?.toUpperCase() || "?"}
-                  </div>
-                )}
-              </div>
+              {/* Avatar removed */}
 
               {/* Content */}
               <div className="flex-1 min-w-0">

@@ -42,20 +42,7 @@ export default function GearLeaderboard({ leaderboard }: Props) {
                 )}
               </span>
 
-              {/* Avatar */}
-              <div className="flex-shrink-0">
-                {member.image ? (
-                  <img
-                    src={member.image}
-                    alt={member.name}
-                    className="w-7 h-7 rounded-full border border-game-border"
-                  />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-game-darker border border-game-border flex items-center justify-center text-xs text-game-text-muted">
-                    {member.name?.[0]?.toUpperCase() || "?"}
-                  </div>
-                )}
-              </div>
+              {/* Avatar removed */}
 
               {/* Name + CP */}
               <div className="flex-1 min-w-0">

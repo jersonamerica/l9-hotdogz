@@ -151,20 +151,7 @@ export default function ActivityLog() {
                 key={entry._id}
                 className="flex items-start gap-3 py-2 px-2 rounded hover:bg-game-card-hover/50 transition-colors"
               >
-                {/* Avatar */}
-                <div className="flex-shrink-0 mt-0.5">
-                  {entry.user?.image ? (
-                    <img
-                      src={entry.user.image}
-                      alt={entry.user.name}
-                      className="w-7 h-7 rounded-full border border-game-border"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-game-darker border border-game-border flex items-center justify-center text-xs text-game-text-muted">
-                      {entry.user?.name?.[0]?.toUpperCase() || "?"}
-                    </div>
-                  )}
-                </div>
+                {/* Avatar removed */}
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">

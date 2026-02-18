@@ -7,12 +7,7 @@ interface Props {
   avgProgress: number;
 }
 
-export default function WelcomeBanner({
-  userName,
-  ign,
-  totalMembers,
-  avgProgress,
-}: Props) {
+export default function WelcomeBanner({ userName, ign, avgProgress }: Props) {
   const displayName = ign || userName;
 
   return (

@@ -8,9 +8,12 @@ import WelcomeBanner from "@/components/WelcomeBanner";
 import GuildStats from "@/components/GuildStats";
 import GearLeaderboard from "@/components/GearLeaderboard";
 import StillNeeded from "@/components/StillNeeded";
+import { getStats } from "@/lib/getStats";
+import Image from "next/image";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
+  const stats = await getStats();
 
   return (
     <div
@@ -21,11 +24,14 @@ export default async function Home() {
         <nav className="bg-game-nav/80 backdrop-blur-sm border-b border-game-border">
           <div className="w-[90%] mx-auto py-4 flex justify-between items-center">
             <h1 className="text-2xl font-bold text-game-accent flex items-center gap-2">
-              <img
+              <Image
                 src="/logo/hotdog_logo.png"
                 alt="Logo"
+                width={80}
+                height={80}
                 className="w-20 h-20"
-              />{" "}
+                priority
+              />
               MC ` HotdogzZ
             </h1>
             <div className="flex items-center gap-4">
@@ -62,12 +68,21 @@ export default async function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left column: Banner, Stats, Announcements, Leaderboard + Needed */}
             <div className="lg:col-span-2 space-y-6">
-              <WelcomeBanner userName={session?.user?.name} />
+              <WelcomeBanner
+                userName={session?.user?.name}
+                totalMembers={stats.totalMembers}
+                avgProgress={stats.avgProgress}
+              />
               <AnnouncementBoard />
-              <GuildStats />
+              <GuildStats
+                totalMembers={stats.totalMembers}
+                totalEquipment={stats.totalEquipment}
+                avgCp={stats.avgCp}
+                avgProgress={stats.avgProgress}
+              />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <GearLeaderboard />
-                <StillNeeded />
+                <GearLeaderboard leaderboard={stats.leaderboard} />
+                <StillNeeded items={stats.mostNeeded} totalMembers={stats.totalMembers} />
               </div>
             </div>
 
