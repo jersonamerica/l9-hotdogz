@@ -1,7 +1,3 @@
-"use client";
-
-import { useState, useEffect } from "react";
-
 interface NeededItem {
   _id: string;
   name: string;
@@ -9,36 +5,16 @@ interface NeededItem {
   count: number;
 }
 
-export default function StillNeeded() {
-  const [items, setItems] = useState<NeededItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [totalMembers, setTotalMembers] = useState(0);
+interface Props {
+  items: NeededItem[];
+  totalMembers: number;
+}
 
-  useEffect(() => {
-    fetch("/api/stats")
-      .then((r) => r.json())
-      .then((data) => {
-        setItems(data.mostNeeded || []);
-        setTotalMembers(data.totalMembers || 0);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
+export default function StillNeeded({ items, totalMembers }: Props) {
   const typeColors: Record<string, string> = {
     gear: "bg-blue-500/20 text-blue-400",
     special: "bg-purple-500/20 text-purple-400",
   };
-
-  if (loading) {
-    return (
-      <div className="bg-game-card/80 backdrop-blur-sm border border-game-border rounded-xl p-6">
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-game-accent"></div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-game-card/80 backdrop-blur-sm border border-game-border rounded-xl p-6">

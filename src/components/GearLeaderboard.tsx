@@ -1,7 +1,3 @@
-"use client";
-
-import { useState, useEffect } from "react";
-
 interface LeaderEntry {
   _id: string;
   name: string;
@@ -11,30 +7,11 @@ interface LeaderEntry {
   gearProgress: number;
 }
 
-export default function GearLeaderboard() {
-  const [leaderboard, setLeaderboard] = useState<LeaderEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+interface Props {
+  leaderboard: LeaderEntry[];
+}
 
-  useEffect(() => {
-    fetch("/api/stats")
-      .then((r) => r.json())
-      .then((data) => {
-        setLeaderboard(data.leaderboard || []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="bg-game-card/80 backdrop-blur-sm border border-game-border rounded-xl p-6">
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-game-accent"></div>
-        </div>
-      </div>
-    );
-  }
-
+export default function GearLeaderboard({ leaderboard }: Props) {
   const medals = ["🥇", "🥈", "🥉"];
 
   return (

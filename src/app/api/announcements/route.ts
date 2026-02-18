@@ -19,7 +19,11 @@ export async function GET() {
       .sort({ pinned: -1, createdAt: -1 })
       .lean();
 
-    return NextResponse.json(announcements);
+    return NextResponse.json(announcements, {
+      headers: {
+        "Cache-Control": "private, s-maxage=30, stale-while-revalidate=60",
+      },
+    });
   } catch (error) {
     console.error("Error fetching announcements:", error);
     return NextResponse.json(

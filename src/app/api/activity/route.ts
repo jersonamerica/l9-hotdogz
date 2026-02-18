@@ -20,7 +20,11 @@ export async function GET() {
       .limit(30)
       .lean();
 
-    return NextResponse.json(logs);
+    return NextResponse.json(logs, {
+      headers: {
+        "Cache-Control": "private, s-maxage=15, stale-while-revalidate=30",
+      },
+    });
   } catch (error) {
     console.error("Error fetching activity logs:", error);
     return NextResponse.json(
