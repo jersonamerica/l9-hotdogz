@@ -71,7 +71,7 @@ export async function PUT(req: NextRequest) {
     const changedFields: string[] = [];
     for (const key of Object.keys(updateData)) {
       if (key === "gearLog") continue;
-      const oldValue = currentUser[key];
+      const oldValue = (currentUser as Record<string, unknown>)[key];
       const newValue = updateData[key];
       if (oldValue !== newValue) {
         changedFields.push(key);
