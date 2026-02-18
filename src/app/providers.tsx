@@ -15,7 +15,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
           revalidateOnMount: true,
           revalidateOnReconnect: false,
           revalidateIfStale: true,
-          dedupingInterval: 60000,
+          dedupingInterval: 5000,
         }}
       >
         {children}
