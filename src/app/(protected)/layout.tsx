@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import connectDB from "@/lib/db";
 import { User } from "@/models/User";
+import NavBar from "@/components/NavBar";
 
 export default async function ProtectedLayout({
   children,
@@ -22,5 +23,10 @@ export default async function ProtectedLayout({
     }
   }
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-game-dark">
+      <NavBar />
+      {children}
+    </div>
+  );
 }
