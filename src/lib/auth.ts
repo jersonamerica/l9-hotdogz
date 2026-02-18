@@ -1,4 +1,4 @@
-import NextAuth, { type NextAuthOptions } from "next-auth";
+import { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import connectDB from "./db";
 import { User } from "@/models/User";
@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
         if (!dbUser) {
           // Create new user
           dbUser = await User.create({
-            email: user.email,
+            email: user.email!,
             name: user.name,
             image: user.image,
             googleId: account.providerAccountId,

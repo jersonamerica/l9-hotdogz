@@ -408,7 +408,7 @@ export default function ProfileEditor() {
                     ? MASTERY_OPTIONS.filter((o) =>
                         o.toLowerCase().includes(val.toLowerCase()),
                       )
-                    : MASTERY_OPTIONS;
+                    : [...MASTERY_OPTIONS];
                   setMasterySuggestions(filtered);
                   setShowMasterySuggestions(filtered.length > 0);
                 }}
@@ -417,7 +417,7 @@ export default function ProfileEditor() {
                     ? MASTERY_OPTIONS.filter((o) =>
                         o.toLowerCase().includes(masterySearch.toLowerCase()),
                       )
-                    : MASTERY_OPTIONS;
+                    : [...MASTERY_OPTIONS];
                   setMasterySuggestions(filtered);
                   setShowMasterySuggestions(filtered.length > 0);
                 }}
