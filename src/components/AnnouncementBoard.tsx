@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
+import useSWR, { mutate } from "swr";
 
 interface Announcement {
   _id: string;
@@ -21,8 +22,8 @@ export default function AnnouncementBoard() {
   const { data: session } = useSession();
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: announcements = [], isLoading: loading } = useSWR<Announcement[]>("/api/announcements");
+
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -30,24 +31,6 @@ export default function AnnouncementBoard() {
   const [pinned, setPinned] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const fetchAnnouncements = useCallback(async () => {
-    try {
-      const res = await fetch("/api/announcements");
-      if (res.ok) {
-        const data = await res.json();
-        setAnnouncements(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch announcements:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAnnouncements();
-  }, [fetchAnnouncements]);
 
   const resetForm = () => {
     setTitle("");
@@ -77,7 +60,8 @@ export default function AnnouncementBoard() {
         });
         if (res.ok) {
           resetForm();
-          fetchAnnouncements();
+          mutate("/api/announcements");
+          mutate("/api/activity");
         }
       } else {
         const res = await fetch("/api/announcements", {
@@ -87,7 +71,8 @@ export default function AnnouncementBoard() {
         });
         if (res.ok) {
           resetForm();
-          fetchAnnouncements();
+          mutate("/api/announcements");
+          mutate("/api/activity");
         }
       }
     } catch (error) {
@@ -104,7 +89,8 @@ export default function AnnouncementBoard() {
         method: "DELETE",
       });
       if (res.ok) {
-        fetchAnnouncements();
+        mutate("/api/announcements");
+        mutate("/api/activity");
       }
     } catch (error) {
       console.error("Failed to delete announcement:", error);
@@ -126,7 +112,7 @@ export default function AnnouncementBoard() {
     return (
       <div className="bg-game-card/80 backdrop-blur-sm border border-game-border rounded-xl p-6">
         <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-game-accent"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-game-border border-t-game-accent"></div>
         </div>
       </div>
     );

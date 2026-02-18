@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import useSWR, { mutate } from "swr";
 import { MASTERY_OPTIONS, MASTERY_IMAGES } from "@/lib/constants";
 
 interface PopulatedEquipment {
@@ -38,8 +39,12 @@ interface UserProfile {
 }
 
 export default function ProfileEditor() {
+  const { data: profileData, isLoading: profileLoading } = useSWR<UserProfile>("/api/user");
+  const { data: equipmentData, isLoading: eqLoading } = useSWR<EquipmentItem[]>("/api/equipment");
+  const loading = profileLoading || eqLoading;
+  const equipment = equipmentData || [];
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -53,7 +58,6 @@ export default function ProfileEditor() {
   const [gearLog, setGearLog] = useState<GearLogEntry[]>([]);
 
   // Equipment suggestions
-  const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
   const [newGearSearch, setNewGearSearch] = useState("");
   const [selectedEquipment, setSelectedEquipment] =
     useState<EquipmentItem | null>(null);
@@ -82,41 +86,17 @@ export default function ProfileEditor() {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  const fetchProfile = useCallback(async () => {
-    try {
-      const res = await fetch("/api/user");
-      if (res.ok) {
-        const data: UserProfile = await res.json();
-        setProfile(data);
-        setName(data.name || "");
-        setCp(String(data.cp || 0));
-        setMastery(data.mastery || "");
-        setMasterySearch(data.mastery || "");
-        setGearLog(data.gearLog || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch profile:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchEquipment = useCallback(async () => {
-    try {
-      const res = await fetch("/api/equipment");
-      if (res.ok) {
-        const data = await res.json();
-        setEquipment(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch equipment:", error);
-    }
-  }, []);
-
+  // Sync SWR data into local state when it arrives
   useEffect(() => {
-    fetchProfile();
-    fetchEquipment();
-  }, [fetchProfile, fetchEquipment]);
+    if (profileData && !profile) {
+      setProfile(profileData);
+      setName(profileData.name || "");
+      setCp(String(profileData.cp || 0));
+      setMastery(profileData.mastery || "");
+      setMasterySearch(profileData.mastery || "");
+      setGearLog(profileData.gearLog || []);
+    }
+  }, [profileData, profile]);
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -163,6 +143,11 @@ export default function ProfileEditor() {
         setProfile(data);
         setGearLog(data.gearLog || []);
         setMessage({ type: "success", text: "Profile saved successfully!" });
+        // Invalidate caches that depend on user data
+        mutate("/api/user");
+        mutate("/api/members");
+        mutate("/api/stats");
+        mutate("/api/activity");
       } else {
         const err = await res.json();
         setMessage({ type: "error", text: err.error || "Failed to save" });
@@ -221,6 +206,10 @@ export default function ProfileEditor() {
       if (res.ok) {
         const data: UserProfile = await res.json();
         setGearLog(data.gearLog || []);
+        mutate("/api/user");
+        mutate("/api/members");
+        mutate("/api/stats");
+        mutate("/api/activity");
       } else {
         setMessage({ type: "error", text: "Failed to update gear log" });
       }
@@ -311,7 +300,7 @@ export default function ProfileEditor() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-game-accent"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-game-border border-t-game-accent"></div>
       </div>
     );
   }

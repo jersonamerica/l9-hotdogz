@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import useSWR from "swr";
 
 interface ActivityEntry {
   _id: string;
@@ -81,31 +82,12 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function ActivityLog() {
-  const [activities, setActivities] = useState<ActivityEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: activities = [], isLoading: loading, mutate } = useSWR<ActivityEntry[]>("/api/activity");
   const [refreshing, setRefreshing] = useState(false);
-
-  const fetchActivities = useCallback(async () => {
-    try {
-      const res = await fetch("/api/activity");
-      if (res.ok) {
-        const data = await res.json();
-        setActivities(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch activity log:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchActivities();
-  }, [fetchActivities]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchActivities();
+    await mutate();
     setRefreshing(false);
   };
 
@@ -113,7 +95,7 @@ export default function ActivityLog() {
     return (
       <div className="bg-game-card/80 backdrop-blur-sm border border-game-border rounded-xl p-6">
         <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-game-accent"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-game-border border-t-game-accent"></div>
         </div>
       </div>
     );

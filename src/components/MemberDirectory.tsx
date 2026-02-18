@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import useSWR from "swr";
 import { MASTERY_IMAGES } from "@/lib/constants";
 
 interface GearLogEntry {
@@ -31,31 +32,13 @@ type SortKey = "name" | "cp" | "mastery" | "gearProgress";
 type SortDir = "asc" | "desc";
 
 export default function MemberDirectory() {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: members = [], isLoading: loading, mutate } = useSWR<Member[]>("/api/members");
+
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("cp");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-
-  const fetchMembers = useCallback(async () => {
-    try {
-      const res = await fetch("/api/members");
-      if (res.ok) {
-        const data = await res.json();
-        setMembers(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch members:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -104,14 +87,14 @@ export default function MemberDirectory() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchMembers();
+    await mutate();
     setRefreshing(false);
   };
 
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-game-accent"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-game-border border-t-game-accent"></div>
       </div>
     );
   }

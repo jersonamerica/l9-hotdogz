@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import useSWR, { mutate } from "swr";
 import EquipmentForm from "./EquipmentForm";
 
 interface EquipmentItem {
@@ -23,40 +24,16 @@ export default function EquipmentList({
 }: {
   isAdmin?: boolean;
 }) {
-  const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
-  const [members, setMembers] = useState<MemberNeed[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: equipment = [], isLoading: eqLoading } = useSWR<EquipmentItem[]>("/api/equipment");
+  const { data: members = [], isLoading: memLoading } = useSWR<MemberNeed[]>("/api/members");
+  const loading = eqLoading || memLoading;
+
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<EquipmentItem | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const fetchEquipment = useCallback(async () => {
-    try {
-      const [eqRes, memRes] = await Promise.all([
-        fetch("/api/equipment"),
-        fetch("/api/members"),
-      ]);
-      if (eqRes.ok) {
-        const data = await eqRes.json();
-        setEquipment(data);
-      }
-      if (memRes.ok) {
-        const data = await memRes.json();
-        setMembers(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchEquipment();
-  }, [fetchEquipment]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this equipment?")) return;
@@ -65,7 +42,10 @@ export default function EquipmentList({
     try {
       const res = await fetch(`/api/equipment/${id}`, { method: "DELETE" });
       if (res.ok) {
-        setEquipment((prev) => prev.filter((item) => item._id !== id));
+        mutate("/api/equipment");
+        mutate("/api/members");
+        mutate("/api/stats");
+        mutate("/api/activity");
       }
     } catch (error) {
       console.error("Failed to delete equipment:", error);
@@ -77,7 +57,10 @@ export default function EquipmentList({
   const handleSave = () => {
     setShowForm(false);
     setEditingItem(null);
-    fetchEquipment();
+    mutate("/api/equipment");
+    mutate("/api/members");
+    mutate("/api/stats");
+    mutate("/api/activity");
   };
 
   const handleEdit = (item: EquipmentItem) => {
@@ -92,7 +75,7 @@ export default function EquipmentList({
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchEquipment();
+    await Promise.all([mutate("/api/equipment"), mutate("/api/members")]);
     setRefreshing(false);
   };
 
@@ -120,7 +103,7 @@ export default function EquipmentList({
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-game-accent"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-game-border border-t-game-accent"></div>
       </div>
     );
   }
