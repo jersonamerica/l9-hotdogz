@@ -355,7 +355,10 @@ export default function ProfileEditor() {
           {mastery && (
             <span
               className="text-2xl font-black uppercase tracking-widest text-game-accent drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]"
-              style={{ fontFamily: "'Segoe UI', Impact, sans-serif", letterSpacing: "0.15em" }}
+              style={{
+                fontFamily: "'Segoe UI', Impact, sans-serif",
+                letterSpacing: "0.15em",
+              }}
             >
               {mastery}
             </span>
@@ -427,7 +430,12 @@ export default function ProfileEditor() {
                   setTimeout(() => {
                     setMasterySearch((prev) => {
                       // If it was already updated by a selection, keep it
-                      if (MASTERY_OPTIONS.includes(prev)) return prev;
+                      if (
+                        MASTERY_OPTIONS.includes(
+                          prev as (typeof MASTERY_OPTIONS)[number],
+                        )
+                      )
+                        return prev;
                       return mastery;
                     });
                     setShowMasterySuggestions(false);
