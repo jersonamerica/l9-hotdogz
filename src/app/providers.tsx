@@ -11,9 +11,10 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       <SWRConfig
         value={{
           fetcher,
-          revalidateOnFocus: false,
+          revalidateOnFocus: true,
+          revalidateOnMount: true,
           revalidateOnReconnect: false,
-          revalidateIfStale: false,
+          revalidateIfStale: true,
           dedupingInterval: 60000,
         }}
       >
