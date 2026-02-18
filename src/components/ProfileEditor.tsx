@@ -430,6 +430,7 @@ export default function ProfileEditor() {
                   setTimeout(() => {
                     setMasterySearch((prev) => {
                       // If it was already updated by a selection, keep it
+                      //   If it's a valid mastery option, keep it
                       if (
                         MASTERY_OPTIONS.includes(
                           prev as (typeof MASTERY_OPTIONS)[number],
