@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { MASTERY_OPTIONS, MASTERY_IMAGES } from "@/lib/constants";
 
 export default function OnboardingForm() {
   const [name, setName] = useState("");
   const [cp, setCp] = useState("");
   const [mastery, setMastery] = useState("");
+  const [equipmentType, setEquipmentType] = useState("Plate");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -28,6 +30,7 @@ export default function OnboardingForm() {
           name: name.trim(),
           cp: Number(cp) || 0,
           mastery,
+          equipmentType,
         }),
       });
 
@@ -51,7 +54,14 @@ export default function OnboardingForm() {
       <div className="w-full max-w-2xl mx-auto px-4">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-game-accent mb-2">
-            ⚔️ Welcome, Adventurer!
+            <Image
+              src={"/logo/intro_logo.png"}
+              alt={mastery}
+              width={60}
+              height={60}
+              className="inline-block align-middle mr-2"
+            />
+            Welcome, Adventurer!
           </h1>
           <p className="text-game-text-muted">
             Set up your character before entering the guild.
@@ -133,6 +143,41 @@ export default function OnboardingForm() {
               />
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-game-text-muted mb-2">
+              Equipment Type *s
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {["Plate", "Leather", "Cloth"].map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setEquipmentType(type)}
+                  className={`flex flex-col items-center gap-2 p-3 rounded border transition-colors ${
+                    equipmentType === type
+                      ? "border-game-accent bg-game-accent/10 text-game-accent"
+                      : "border-game-border bg-game-card text-game-text-muted hover:border-game-text-muted"
+                  }`}
+                >
+                  <Image
+                    src={
+                      type === "Plate"
+                        ? "/image/plate-armor.png"
+                        : type === "Leather"
+                          ? "/image/leather-armor.png"
+                          : "/image/cloth-armor.png"
+                    }
+                    alt={type}
+                    width={60}
+                    height={60}
+                    className="object-contain"
+                  />
+                  <span className="text-xs font-medium">{type}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
           <button
             type="submit"

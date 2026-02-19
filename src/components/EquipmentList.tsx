@@ -289,17 +289,6 @@ export default function EquipmentList({
                                     key={m._id}
                                     className="flex items-center gap-2 bg-game-card/50 border border-game-border rounded px-2 py-1.5"
                                   >
-                                    {m.image ? (
-                                      <img
-                                        src={m.image}
-                                        alt={m.name}
-                                        className="w-5 h-5 rounded-full border border-game-border"
-                                      />
-                                    ) : (
-                                      <div className="w-5 h-5 rounded-full bg-game-darker border border-game-border flex items-center justify-center text-[10px] text-game-text-muted">
-                                        {(m.name || "?")[0].toUpperCase()}
-                                      </div>
-                                    )}
                                     <span className="text-xs text-game-text truncate">
                                       {m.name || "Unknown"}
                                     </span>

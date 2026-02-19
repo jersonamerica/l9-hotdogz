@@ -35,6 +35,17 @@ const userSchema = new Schema(
       type: String,
       default: "",
     },
+    equipmentType: {
+      type: String,
+      enum: ["Plate", "Leather", "Cloth"],
+      default: "Plate",
+    },
+    userEquipmentItems: [
+      {
+        type: String,
+        default: "",
+      },
+    ],
     isOnboarded: {
       type: Boolean,
       default: false,

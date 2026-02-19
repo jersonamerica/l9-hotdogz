@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const body = await req.json();
 
-    const { name, cp, mastery } = body;
+    const { name, cp, mastery, equipmentType } = body;
 
     if (!name?.trim() || !mastery?.trim()) {
       return NextResponse.json(
@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
           name: name.trim(),
           cp: Number(cp) || 0,
           mastery: mastery.trim(),
+          equipmentType: equipmentType || "Plate",
           isOnboarded: true,
         },
       },

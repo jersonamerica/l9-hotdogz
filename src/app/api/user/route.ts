@@ -16,7 +16,9 @@ export async function GET() {
   try {
     await connectDB();
     const user = await User.findById(session.user.id)
-      .select("name email image cp mastery gearLog role isOnboarded")
+      .select(
+        "name email image cp mastery equipmentType userEquipmentItems gearLog role isOnboarded",
+      )
       .populate("gearLog.equipment", "name type")
       .lean();
 
@@ -53,7 +55,9 @@ export async function PUT(req: NextRequest) {
 
     // Fetch the current user before updating
     const currentUser = await User.findById(session.user.id)
-      .select("name email image cp mastery gearLog role")
+      .select(
+        "name email image cp mastery equipmentType userEquipmentItems gearLog role",
+      )
       .populate("gearLog.equipment", "name type")
       .lean();
 
@@ -65,6 +69,10 @@ export async function PUT(req: NextRequest) {
     if (body.name !== undefined) updateData.name = body.name;
     if (body.cp !== undefined) updateData.cp = Number(body.cp);
     if (body.mastery !== undefined) updateData.mastery = body.mastery;
+    if (body.equipmentType !== undefined)
+      updateData.equipmentType = body.equipmentType;
+    if (body.userEquipmentItems !== undefined)
+      updateData.userEquipmentItems = body.userEquipmentItems;
     if (body.gearLog !== undefined) updateData.gearLog = body.gearLog;
 
     // Compare old and new values, but only log property names that actually changed
@@ -83,7 +91,9 @@ export async function PUT(req: NextRequest) {
       { $set: updateData },
       { new: true, runValidators: true },
     )
-      .select("name email image cp mastery gearLog role")
+      .select(
+        "name email image cp mastery equipmentType userEquipmentItems gearLog role",
+      )
       .populate("gearLog.equipment", "name type")
       .lean();
 

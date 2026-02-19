@@ -35,9 +35,17 @@ interface UserProfile {
   image?: string;
   cp: number;
   mastery: string;
+  equipmentType: string;
+  userEquipmentItems: string[];
   gearLog: GearLogEntry[];
   role: string;
 }
+
+const EQUIPMENT_ITEMS: Record<string, string[]> = {
+  Plate: ["Helm", "Armor", "Gaiters", "Gauntlets", "Greaves"],
+  Leather: ["Hood", "Vest", "Leather Pants", "Wristband", "Boots"],
+  Cloth: ["Hat", "Robe", "Pants", "Gloves", "Loafers"],
+};
 
 export default function ProfileEditor() {
   const { data: profileData, isLoading: profileLoading } =
@@ -58,6 +66,8 @@ export default function ProfileEditor() {
   const [name, setName] = useState("");
   const [cp, setCp] = useState("");
   const [mastery, setMastery] = useState("");
+  const [equipmentType, setEquipmentType] = useState("Plate");
+  const [userEquipmentItems, setUserEquipmentItems] = useState<string[]>([]);
   const [gearLog, setGearLog] = useState<GearLogEntry[]>([]);
 
   // Equipment suggestions
@@ -97,6 +107,8 @@ export default function ProfileEditor() {
       setCp(String(profileData.cp || 0));
       setMastery(profileData.mastery || "");
       setMasterySearch(profileData.mastery || "");
+      setEquipmentType(profileData.equipmentType || "Plate");
+      setUserEquipmentItems(profileData.userEquipmentItems || []);
       setGearLog(profileData.gearLog || []);
     }
   }, [profileData, profile]);
@@ -137,6 +149,8 @@ export default function ProfileEditor() {
           name,
           cp: Number(cp) || 0,
           mastery,
+          equipmentType,
+          userEquipmentItems,
           gearLog: gearLogPayload,
         }),
       });
@@ -185,6 +199,12 @@ export default function ProfileEditor() {
     setSelectedEquipment(item);
     setNewGearSearch(item.name);
     setShowSuggestions(false);
+  };
+
+  const toggleEquipmentItem = (item: string) => {
+    setUserEquipmentItems((prev) =>
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item],
+    );
   };
 
   const toGearLogPayload = (entries: GearLogEntry[]): GearLogPayload[] =>
@@ -387,80 +407,135 @@ export default function ProfileEditor() {
               />
             </div>
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-game-text-muted mb-1">
+                Mastery
+              </label>
+              <div className="relative" ref={masteryRef}>
+                <input
+                  type="text"
+                  value={masterySearch}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setMasterySearch(val);
+                    const filtered = val.trim()
+                      ? MASTERY_OPTIONS.filter((o) =>
+                          o.toLowerCase().includes(val.toLowerCase()),
+                        )
+                      : [...MASTERY_OPTIONS];
+                    setMasterySuggestions(filtered);
+                    setShowMasterySuggestions(filtered.length > 0);
+                  }}
+                  onFocus={() => {
+                    const filtered = masterySearch.trim()
+                      ? MASTERY_OPTIONS.filter((o) =>
+                          o.toLowerCase().includes(masterySearch.toLowerCase()),
+                        )
+                      : [...MASTERY_OPTIONS];
+                    setMasterySuggestions(filtered);
+                    setShowMasterySuggestions(filtered.length > 0);
+                  }}
+                  onBlur={() => {
+                    // Revert to current mastery if nothing was selected
+                    // Use a small delay so mousedown on option can fire first
+                    setTimeout(() => {
+                      setMasterySearch((prev) => {
+                        // If it was already updated by a selection, keep it
+                        //   If it's a valid mastery option, keep it
+                        if (
+                          MASTERY_OPTIONS.includes(
+                            prev as (typeof MASTERY_OPTIONS)[number],
+                          )
+                        )
+                          return prev;
+                        return mastery;
+                      });
+                      setShowMasterySuggestions(false);
+                    }, 200);
+                  }}
+                  className="w-full bg-game-darker/50 border border-game-border rounded px-3 py-2 text-sm text-game-text focus:outline-none focus:border-game-accent placeholder-game-text-muted"
+                  placeholder="Search mastery..."
+                />
+                {showMasterySuggestions && masterySuggestions.length > 0 && (
+                  <div className="absolute z-10 top-full left-0 w-full mt-1 bg-game-card border border-game-border rounded max-h-48 overflow-y-auto">
+                    {masterySuggestions.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault(); // Prevent blur from firing
+                          setMastery(option);
+                          setMasterySearch(option);
+                          setShowMasterySuggestions(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-game-text hover:bg-game-card-hover transition-colors flex items-center gap-2"
+                      >
+                        <img
+                          src={MASTERY_IMAGES[option]}
+                          alt={option}
+                          className="w-6 h-6 object-contain"
+                        />
+                        <span>{option}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-game-text-muted mb-1">
+                Equipment Type
+              </label>
+              <div className="relative">
+                <select
+                  value={equipmentType}
+                  onChange={(e) => setEquipmentType(e.target.value)}
+                  className="w-full bg-game-darker/50 border border-game-border rounded px-3 py-2 pr-10 text-sm text-game-text focus:outline-none focus:border-game-accent appearance-none"
+                >
+                  <option value="Plate">Plate</option>
+                  <option value="Leather">Leather</option>
+                  <option value="Cloth">Cloth</option>
+                </select>
+                <span className="pointer-events-none absolute top-1/2 -translate-y-1/2 right-3 flex items-center">
+                  <svg
+                    className="w-5 h-5 text-game-text-muted"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </div>
 
           <div>
-            <label className="block text-sm font-medium text-game-text-muted mb-1">
-              Mastery
+            <label className="block text-sm font-medium text-game-text-muted mb-2">
+              Owned Equipment ({equipmentType})
             </label>
-            <div className="relative" ref={masteryRef}>
-              <input
-                type="text"
-                value={masterySearch}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setMasterySearch(val);
-                  const filtered = val.trim()
-                    ? MASTERY_OPTIONS.filter((o) =>
-                        o.toLowerCase().includes(val.toLowerCase()),
-                      )
-                    : [...MASTERY_OPTIONS];
-                  setMasterySuggestions(filtered);
-                  setShowMasterySuggestions(filtered.length > 0);
-                }}
-                onFocus={() => {
-                  const filtered = masterySearch.trim()
-                    ? MASTERY_OPTIONS.filter((o) =>
-                        o.toLowerCase().includes(masterySearch.toLowerCase()),
-                      )
-                    : [...MASTERY_OPTIONS];
-                  setMasterySuggestions(filtered);
-                  setShowMasterySuggestions(filtered.length > 0);
-                }}
-                onBlur={() => {
-                  // Revert to current mastery if nothing was selected
-                  // Use a small delay so mousedown on option can fire first
-                  setTimeout(() => {
-                    setMasterySearch((prev) => {
-                      // If it was already updated by a selection, keep it
-                      //   If it's a valid mastery option, keep it
-                      if (
-                        MASTERY_OPTIONS.includes(
-                          prev as (typeof MASTERY_OPTIONS)[number],
-                        )
-                      )
-                        return prev;
-                      return mastery;
-                    });
-                    setShowMasterySuggestions(false);
-                  }, 200);
-                }}
-                className="w-full bg-game-darker/50 border border-game-border rounded px-3 py-2 text-sm text-game-text focus:outline-none focus:border-game-accent placeholder-game-text-muted"
-                placeholder="Search mastery..."
-              />
-              {showMasterySuggestions && masterySuggestions.length > 0 && (
-                <div className="absolute z-10 top-full left-0 w-full mt-1 bg-game-card border border-game-border rounded max-h-48 overflow-y-auto">
-                  {masterySuggestions.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault(); // Prevent blur from firing
-                        setMastery(option);
-                        setMasterySearch(option);
-                        setShowMasterySuggestions(false);
-                      }}
-                      className="w-full text-left px-3 py-2 text-sm text-game-text hover:bg-game-card-hover transition-colors flex items-center gap-2"
-                    >
-                      <img
-                        src={MASTERY_IMAGES[option]}
-                        alt={option}
-                        className="w-6 h-6 object-contain"
-                      />
-                      <span>{option}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+            <div className="grid grid-cols-2 gap-2">
+              {EQUIPMENT_ITEMS[equipmentType]?.map((item) => (
+                <label
+                  key={item}
+                  className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={userEquipmentItems.includes(item)}
+                    onChange={() => toggleEquipmentItem(item)}
+                    className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
+                  />
+                  <span className="text-sm text-game-text">{item}</span>
+                </label>
+              ))}
             </div>
           </div>
 

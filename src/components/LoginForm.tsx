@@ -25,7 +25,9 @@ export default function LoginForm() {
       <div className="bg-game-card border border-game-border rounded p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">⚔️</div>
-          <h1 className="text-3xl font-bold text-game-accent mb-2">L9 Guild</h1>
+          <h1 className="text-3xl font-bold text-game-accent mb-2">
+            Y3 HotdogzZ
+          </h1>
           <p className="text-game-text-muted">
             Sign in to manage your equipment
           </p>
