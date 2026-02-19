@@ -3,6 +3,7 @@
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import EquipmentForm from "./EquipmentForm";
+import EditMemberGearModal from "./EditMemberGearModal";
 
 interface EquipmentItem {
   _id: string;
@@ -16,7 +17,7 @@ interface MemberNeed {
   name: string;
   image?: string;
   cp: number;
-  gearLog: { equipment: { _id: string } }[];
+  gearLog: { equipment: { _id: string }; quantity: number }[];
 }
 
 export default function EquipmentList({
@@ -36,6 +37,10 @@ export default function EquipmentList({
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedMember, setSelectedMember] = useState<MemberNeed | null>(null);
+  const [selectedEquipment, setSelectedEquipment] =
+    useState<EquipmentItem | null>(null);
+  const [showGearModal, setShowGearModal] = useState(false);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this equipment?")) return;
@@ -44,10 +49,7 @@ export default function EquipmentList({
     try {
       const res = await fetch(`/api/equipment/${id}`, { method: "DELETE" });
       if (res.ok) {
-        mutate("/api/equipment");
-        mutate("/api/members");
-        mutate("/api/stats");
-        mutate("/api/activity");
+        doMutations();
       }
     } catch (error) {
       console.error("Failed to delete equipment:", error);
@@ -56,13 +58,17 @@ export default function EquipmentList({
     }
   };
 
-  const handleSave = () => {
-    setShowForm(false);
-    setEditingItem(null);
+  const doMutations = () => {
     mutate("/api/equipment");
     mutate("/api/members");
     mutate("/api/stats");
     mutate("/api/activity");
+  };
+
+  const handleSave = () => {
+    setShowForm(false);
+    setEditingItem(null);
+    doMutations();
   };
 
   const handleEdit = (item: EquipmentItem) => {
@@ -77,8 +83,26 @@ export default function EquipmentList({
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([mutate("/api/equipment"), mutate("/api/members")]);
-    setRefreshing(false);
+    try {
+      // Fetch fresh data from API
+      const [membersRes, equipmentRes] = await Promise.all([
+        fetch("/api/members"),
+        fetch("/api/equipment"),
+      ]);
+
+      if (membersRes.ok && equipmentRes.ok) {
+        const freshMembers = await membersRes.json();
+        const freshEquipment = await equipmentRes.json();
+
+        // Update cache with fresh data
+        mutate("/api/members", freshMembers, false);
+        mutate("/api/equipment", freshEquipment, false);
+      }
+    } catch (error) {
+      console.error("Failed to refresh:", error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const filteredEquipment = equipment.filter((item) => {
@@ -285,9 +309,14 @@ export default function EquipmentList({
                             ) : (
                               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
                                 {needingMembers.map((m) => (
-                                  <div
+                                  <button
                                     key={m._id}
-                                    className="flex items-center gap-2 bg-game-card/50 border border-game-border rounded px-2 py-1.5"
+                                    onClick={() => {
+                                      setSelectedMember(m);
+                                      setSelectedEquipment(item);
+                                      setShowGearModal(true);
+                                    }}
+                                    className="flex items-center gap-2 bg-game-card/50 border border-game-border rounded px-2 py-1.5 hover:border-game-accent transition-colors cursor-pointer text-left"
                                   >
                                     <span className="text-xs text-game-text truncate">
                                       {m.name || "Unknown"}
@@ -295,7 +324,7 @@ export default function EquipmentList({
                                     <span className="text-xs text-game-text-muted ml-auto">
                                       {m.cp.toLocaleString()} CP
                                     </span>
-                                  </div>
+                                  </button>
                                 ))}
                               </div>
                             )}
@@ -316,6 +345,24 @@ export default function EquipmentList({
           equipment={editingItem}
           onSave={handleSave}
           onCancel={handleCancel}
+        />
+      )}
+
+      {isAdmin && (
+        <EditMemberGearModal
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          member={selectedMember as any}
+          equipment={selectedEquipment || undefined}
+          isOpen={showGearModal}
+          onClose={async () => {
+            setShowGearModal(false);
+            setSelectedMember(null);
+            setSelectedEquipment(null);
+            const temp = expandedId;
+            setExpandedId(null); // Close expanded row to force fresh render
+            await handleRefresh();
+            setExpandedId(temp);
+          }}
         />
       )}
     </div>

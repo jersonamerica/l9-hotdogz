@@ -53,8 +53,19 @@ export async function PUT(req: NextRequest) {
     await connectDB();
     const body = await req.json();
 
+    // Determine which user to update (admin can update other users)
+    const targetUserId = body.userId || session.user.id;
+
+    // If trying to update another user, check if admin
+    if (targetUserId !== session.user.id) {
+      const adminUser = await User.findById(session.user.id).select("role");
+      if (adminUser?.role !== "admin") {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+
     // Fetch the current user before updating
-    const currentUser = await User.findById(session.user.id)
+    const currentUser = await User.findById(targetUserId)
       .select(
         "name email image cp mastery equipmentType userEquipmentItems gearLog role",
       )
@@ -87,7 +98,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const user = await User.findByIdAndUpdate(
-      session.user.id,
+      targetUserId,
       { $set: updateData },
       { new: true, runValidators: true },
     )
@@ -109,11 +120,12 @@ export async function PUT(req: NextRequest) {
 
     // Log profile updates with property names only (if value actually changed)
     if (changedFields.length > 0) {
-      await logActivity(
-        session.user.id,
-        "profile_updated",
-        `Updated ${changedFields.join(", ")}`,
-      );
+      const logMsg =
+        targetUserId !== session.user.id
+          ? `Admin updated gear log for ${user?.name || "unknown"}`
+          : `Updated ${changedFields.join(", ")}`;
+
+      await logActivity(session.user.id, "profile_updated", logMsg);
     }
 
     return NextResponse.json(filteredUser);
