@@ -3,6 +3,9 @@
 import { useState } from "react";
 import Image from "next/image";
 import useSWR from "swr";
+import { useSession } from "next-auth/react";
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface User {
   _id: string;
@@ -19,15 +22,28 @@ const EQUIPMENT_ITEMS: Record<string, string[]> = {
 };
 
 export default function EquipmentPage() {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "admin";
+
   const { data: membersData = [], mutate } = useSWR<User[]>(
     "/api/members",
+    fetcher,
     {
-      revalidateOnMount: true,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      revalidateIfStale: true,
     },
   );
+
   const [expandedUsers, setExpandedUsers] = useState<Record<string, boolean>>(
     {},
   );
+  const [editingUserKey, setEditingUserKey] = useState<string | null>(null);
+  const [editingItems, setEditingItems] = useState<Record<string, string[]>>(
+    {},
+  );
+  const [savingUserKey, setSavingUserKey] = useState<string | null>(null);
+  const [savedItems, setSavedItems] = useState<Record<string, string[]>>({});
 
   const categories = [
     {
@@ -55,6 +71,72 @@ export default function EquipmentPage() {
       ...prev,
       [key]: !prev[key],
     }));
+  };
+
+  const startEditing = (
+    userKey: string,
+    userId: string,
+    currentItems: string[],
+  ) => {
+    setEditingUserKey(userKey);
+    const itemsToEdit =
+      savedItems[userId] !== undefined ? savedItems[userId] : currentItems;
+    setEditingItems({
+      [userId]: [...itemsToEdit],
+    });
+  };
+
+  const toggleItem = (userId: string, item: string) => {
+    setEditingItems((prev) => {
+      const items = prev[userId] || [];
+      if (items.includes(item)) {
+        return {
+          ...prev,
+          [userId]: items.filter((i) => i !== item),
+        };
+      } else {
+        return {
+          ...prev,
+          [userId]: [...items, item],
+        };
+      }
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingUserKey(null);
+    setEditingItems({});
+  };
+
+  const saveItems = async (userId: string) => {
+    setSavingUserKey(userId);
+    try {
+      const newItems = editingItems[userId] || [];
+
+      const res = await fetch("/api/user", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          userEquipmentItems: newItems,
+        }),
+      });
+
+      if (res.ok) {
+        // Update local state immediately
+        setSavedItems((prev) => ({
+          ...prev,
+          [userId]: newItems,
+        }));
+
+        setEditingUserKey(null);
+        setEditingItems({});
+      }
+    } catch (error) {
+      console.error("Failed to update equipment items:", error);
+    } finally {
+      setSavingUserKey(null);
+    }
   };
 
   const getUsersByType = (type: string) => {
@@ -132,11 +214,16 @@ export default function EquipmentPage() {
                         const isExpanded = expandedUsers[userKey] || false;
                         const equipmentItems =
                           EQUIPMENT_ITEMS[category.name] || [];
+
+                        const currentItems =
+                          savedItems[user._id] !== undefined
+                            ? savedItems[user._id]
+                            : user.userEquipmentItems;
+
                         const completionPercentage =
                           equipmentItems.length > 0
                             ? Math.round(
-                                (user.userEquipmentItems.length /
-                                  equipmentItems.length) *
+                                (currentItems.length / equipmentItems.length) *
                                   100,
                               )
                             : 0;
@@ -195,27 +282,81 @@ export default function EquipmentPage() {
                                 <p className="text-xs font-medium text-game-text-muted uppercase tracking-wider mb-3">
                                   Equipment Items
                                 </p>
-                                {equipmentItems.map((item) => (
-                                  <div
-                                    key={item}
-                                    className="flex items-center gap-2 text-xs text-game-text"
-                                  >
-                                    <span className="w-4 h-4 flex items-center justify-center">
-                                      {user.userEquipmentItems.includes(
-                                        item,
-                                      ) ? (
-                                        <span className="text-green-400">
-                                          ✓
-                                        </span>
-                                      ) : (
-                                        <span className="text-game-text-muted">
-                                          ✗
-                                        </span>
-                                      )}
-                                    </span>
-                                    <span>{item}</span>
+                                {equipmentItems.map((item) => {
+                                  const isEditing = editingUserKey === userKey;
+
+                                  const hasItem = isEditing
+                                    ? editingItems[user._id]?.includes(item)
+                                    : savedItems[user._id] !== undefined
+                                      ? savedItems[user._id].includes(item)
+                                      : user.userEquipmentItems.includes(item);
+                                  return (
+                                    <div
+                                      key={item}
+                                      className={`flex items-center gap-2 text-xs text-game-text ${
+                                        isEditing ? "cursor-pointer" : ""
+                                      }`}
+                                    >
+                                      <button
+                                        onClick={() => {
+                                          if (isEditing && isAdmin) {
+                                            toggleItem(user._id, item);
+                                          }
+                                        }}
+                                        disabled={!isEditing || !isAdmin}
+                                        className={`w-4 h-4 flex items-center justify-center ${
+                                          hasItem
+                                            ? "text-green-400"
+                                            : "text-game-text-muted"
+                                        } ${
+                                          isEditing && isAdmin
+                                            ? "cursor-pointer hover:text-green-400"
+                                            : ""
+                                        }`}
+                                      >
+                                        {hasItem ? "✓" : "✗"}
+                                      </button>
+                                      <span>{item}</span>
+                                    </div>
+                                  );
+                                })}
+
+                                {isAdmin && (
+                                  <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-game-border">
+                                    {editingUserKey === userKey ? (
+                                      <>
+                                        <button
+                                          onClick={cancelEditing}
+                                          className="px-3 py-1 text-xs font-medium text-game-text-muted hover:text-game-text border border-game-border rounded transition-colors cursor-pointer"
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          onClick={() => saveItems(user._id)}
+                                          disabled={savingUserKey === user._id}
+                                          className="px-3 py-1 text-xs font-medium text-white bg-game-accent rounded hover:bg-game-accent-hover disabled:opacity-50 transition-colors cursor-pointer"
+                                        >
+                                          {savingUserKey === user._id
+                                            ? "Saving..."
+                                            : "Save"}
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <button
+                                        onClick={() =>
+                                          startEditing(
+                                            userKey,
+                                            user._id,
+                                            user.userEquipmentItems,
+                                          )
+                                        }
+                                        className="px-3 py-1 text-xs font-medium text-game-accent hover:text-game-accent-hover transition-colors cursor-pointer"
+                                      >
+                                        Edit
+                                      </button>
+                                    )}
                                   </div>
-                                ))}
+                                )}
                               </div>
                             )}
                           </div>
