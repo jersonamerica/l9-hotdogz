@@ -21,7 +21,6 @@ const EQUIPMENT_ITEMS: Record<string, string[]> = {
 export default function EquipmentPage() {
   const { data: membersData = [], mutate } = useSWR<User[]>(
     "/api/members",
-    undefined,
     {
       revalidateOnMount: true,
     },
