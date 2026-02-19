@@ -283,7 +283,7 @@ export default function EquipmentList({
                                 All members have this item!
                               </p>
                             ) : (
-                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
                                 {needingMembers.map((m) => (
                                   <div
                                     key={m._id}
