@@ -134,16 +134,6 @@ export default function OnboardingForm() {
             </div>
           </div>
 
-          {selectedImage && (
-            <div className="flex justify-center">
-              <img
-                src={selectedImage}
-                alt={mastery}
-                className="w-32 h-32 object-contain drop-shadow-lg"
-              />
-            </div>
-          )}
-
           <div>
             <label className="block text-sm font-medium text-game-text-muted mb-2">
               Equipment Type *s
