@@ -50,6 +50,10 @@ const userSchema = new Schema(
       type: [String],
       default: [],
     },
+    userMounts: {
+      type: [String],
+      default: [],
+    },
     isOnboarded: {
       type: Boolean,
       default: false,

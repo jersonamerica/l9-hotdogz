@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MASTERY_OPTIONS, MASTERY_IMAGES } from "@/lib/constants";
 import { ABILITIES } from "@/lib/abilities";
+import { MOUNTS } from "@/lib/mounts";
 import Image from "next/image";
 import { useCrudMutation } from "@/hooks/useCrudMutation";
 
@@ -48,6 +49,7 @@ interface UserProfile {
   equipmentType: string;
   userEquipmentItems: string[];
   userAbilities: string[];
+  userMounts: string[];
   gearLog: GearLogEntry[];
   role: string;
 }
@@ -59,6 +61,7 @@ interface UpdateProfilePayload {
   equipmentType?: string;
   userEquipmentItems?: string[];
   userAbilities?: string[];
+  userMounts?: string[];
   gearLog?: GearLogPayload[];
 }
 
@@ -97,6 +100,7 @@ export default function ProfileEditor() {
   const [equipmentType, setEquipmentType] = useState("Plate");
   const [userEquipmentItems, setUserEquipmentItems] = useState<string[]>([]);
   const [userAbilities, setUserAbilities] = useState<string[]>([]);
+  const [userMounts, setUserMounts] = useState<string[]>([]);
   const [gearLog, setGearLog] = useState<GearLogEntry[]>([]);
 
   // Equipment suggestions
@@ -152,6 +156,7 @@ export default function ProfileEditor() {
       setEquipmentType(profileData.equipmentType || "Plate");
       setUserEquipmentItems(profileData.userEquipmentItems || []);
       setUserAbilities(profileData.userAbilities || []);
+      setUserMounts(profileData.userMounts || []);
       setGearLog(profileData.gearLog || []);
     }
   }, [profileData, profile]);
@@ -192,6 +197,7 @@ export default function ProfileEditor() {
         equipmentType,
         userEquipmentItems,
         userAbilities,
+        userMounts,
         gearLog: gearLogPayload,
       });
 
@@ -239,6 +245,14 @@ export default function ProfileEditor() {
       prev.includes(ability)
         ? prev.filter((item) => item !== ability)
         : [...prev, ability],
+    );
+  };
+
+  const toggleMount = (mount: string) => {
+    setUserMounts((prev) =>
+      prev.includes(mount)
+        ? prev.filter((item) => item !== mount)
+        : [...prev, mount],
     );
   };
 
@@ -373,9 +387,9 @@ export default function ProfileEditor() {
       )}
 
       {/* Profile Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-        {/* Left: Weapon image */}
-        <div className="flex flex-col items-center justify-center gap-3">
+      <div className="space-y-6">
+        {/* Image and Mastery Name - Top */}
+        <div className="flex flex-col items-center gap-3">
           <img
             src={
               mastery
@@ -383,7 +397,7 @@ export default function ProfileEditor() {
                 : "/weapon/battle_shield.png"
             }
             alt={mastery || "Weapon"}
-            className="w-full max-w-md object-contain drop-shadow-lg"
+            className="w-full max-w-xs object-contain drop-shadow-lg"
           />
           {mastery && (
             <span
@@ -398,7 +412,7 @@ export default function ProfileEditor() {
           )}
         </div>
 
-        {/* Right: All profile info */}
+        {/* User Info Section */}
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -537,60 +551,86 @@ export default function ProfileEditor() {
               </div>
             </div>
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-game-text-muted mb-2">
-              Abilities
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {ABILITIES.map((ability) => (
-                <label
-                  key={ability}
-                  className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    checked={userAbilities.includes(ability)}
-                    onChange={() => toggleAbility(ability)}
-                    className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
-                  />
-                  <span className="text-sm text-game-text">{ability}</span>
-                </label>
-              ))}
-            </div>
+        {/* Owned Legendary Equipment Section */}
+        <div>
+          <label className="block text-sm font-medium text-game-text-muted mb-2">
+            Owned Legendary Equipment ({equipmentType})
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {EQUIPMENT_ITEMS[equipmentType]?.map((item) => (
+              <label
+                key={item}
+                className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
+              >
+                <input
+                  type="checkbox"
+                  checked={userEquipmentItems.includes(item)}
+                  onChange={() => toggleEquipmentItem(item)}
+                  className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
+                />
+                <span className="text-sm text-game-text">{item}</span>
+              </label>
+            ))}
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-game-text-muted mb-2">
-              Owned Legendary Equipment ({equipmentType})
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {EQUIPMENT_ITEMS[equipmentType]?.map((item) => (
-                <label
-                  key={item}
-                  className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    checked={userEquipmentItems.includes(item)}
-                    onChange={() => toggleEquipmentItem(item)}
-                    className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
-                  />
-                  <span className="text-sm text-game-text">{item}</span>
-                </label>
-              ))}
-            </div>
+        {/* Abilities Section */}
+        <div>
+          <label className="block text-sm font-medium text-game-text-muted mb-2">
+            Abilities
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {ABILITIES.map((ability) => (
+              <label
+                key={ability}
+                className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
+              >
+                <input
+                  type="checkbox"
+                  checked={userAbilities.includes(ability)}
+                  onChange={() => toggleAbility(ability)}
+                  className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
+                />
+                <span className="text-sm text-game-text">{ability}</span>
+              </label>
+            ))}
           </div>
+        </div>
 
-          <div className="flex justify-end">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 text-sm font-medium text-white bg-game-accent rounded hover:bg-game-accent-hover disabled:opacity-50 transition-colors cursor-pointer"
-            >
-              {saving ? "Saving..." : "Save Profile"}
-            </button>
+        {/* Mounts Section */}
+        <div>
+          <label className="block text-sm font-medium text-game-text-muted mb-2">
+            Mounts
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {MOUNTS.map((mount) => (
+              <label
+                key={mount}
+                className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
+              >
+                <input
+                  type="checkbox"
+                  checked={userMounts.includes(mount)}
+                  onChange={() => toggleMount(mount)}
+                  className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
+                />
+                <span className="text-sm text-game-text">{mount}</span>
+              </label>
+            ))}
           </div>
+        </div>
+
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 text-sm font-medium text-white bg-game-accent rounded hover:bg-game-accent-hover disabled:opacity-50 transition-colors cursor-pointer"
+          >
+            {saving ? "Saving..." : "Save Profile"}
+          </button>
         </div>
       </div>
 

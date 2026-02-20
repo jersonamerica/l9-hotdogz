@@ -28,5 +28,6 @@ export const config = {
     "/members",
     "/attendance",
     "/abilities",
+    "/mounts",
   ],
 };

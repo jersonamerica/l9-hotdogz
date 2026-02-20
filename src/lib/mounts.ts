@@ -1,0 +1,15 @@
+export const MOUNTS = [
+  "SOMNIUM",
+  "RABETH",
+  "UNDEMIC",
+  "GLASIS",
+  "DELPHON",
+  "VULCANUS",
+  "LABARTONIS",
+  "RHODI",
+  "LAMPHON",
+  "BAPHON",
+  "PETROLOV",
+  "DRACAS",
+  "LIBERTY",
+] as const;
