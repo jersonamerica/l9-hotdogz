@@ -25,10 +25,21 @@ export default function EquipmentList({
 }: {
   isAdmin?: boolean;
 }) {
-  const { data: equipment = [], isLoading: eqLoading } =
-    useSWR<EquipmentItem[]>("/api/equipment");
-  const { data: members = [], isLoading: memLoading } =
-    useSWR<MemberNeed[]>("/api/members");
+  const { data: equipment = [], isLoading: eqLoading } = useSWR<
+    EquipmentItem[]
+  >("/api/equipment", {
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    dedupingInterval: 2000,
+  });
+  const { data: members = [], isLoading: memLoading } = useSWR<MemberNeed[]>(
+    "/api/members",
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 2000,
+    },
+  );
   const loading = eqLoading || memLoading;
 
   const [showForm, setShowForm] = useState(false);
