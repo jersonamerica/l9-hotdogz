@@ -50,6 +50,10 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    attendancePoints: {
+      type: Number,
+      default: 0,
+    },
     gearLog: [
       {
         equipment: {

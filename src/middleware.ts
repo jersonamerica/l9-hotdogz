@@ -26,5 +26,6 @@ export const config = {
     "/profile",
     "/onboarding",
     "/members",
+    "/attendance",
   ],
 };

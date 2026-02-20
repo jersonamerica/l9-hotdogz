@@ -44,6 +44,8 @@ export default function EquipmentPage() {
   );
   const [savingUserKey, setSavingUserKey] = useState<string | null>(null);
   const [savedItems, setSavedItems] = useState<Record<string, string[]>>({});
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const categories = [
     {
@@ -108,7 +110,7 @@ export default function EquipmentPage() {
     setEditingItems({});
   };
 
-  const saveItems = async (userId: string) => {
+  const saveItems = async (userId: string, userName: string) => {
     setSavingUserKey(userId);
     try {
       const newItems = editingItems[userId] || [];
@@ -131,6 +133,15 @@ export default function EquipmentPage() {
 
         setEditingUserKey(null);
         setEditingItems({});
+
+        // Show success dialog
+        setSuccessMessage(`${userName}'s equipment updated successfully!`);
+        setShowSuccessDialog(true);
+
+        // Auto-close dialog after 2 seconds
+        setTimeout(() => {
+          setShowSuccessDialog(false);
+        }, 2000);
       }
     } catch (error) {
       console.error("Failed to update equipment items:", error);
@@ -293,29 +304,26 @@ export default function EquipmentPage() {
                                   return (
                                     <div
                                       key={item}
-                                      className={`flex items-center gap-2 text-xs text-game-text ${
-                                        isEditing ? "cursor-pointer" : ""
+                                      onClick={() => {
+                                        if (isEditing && isAdmin) {
+                                          toggleItem(user._id, item);
+                                        }
+                                      }}
+                                      className={`flex items-center gap-2 text-xs text-game-text p-2 rounded ${
+                                        isEditing
+                                          ? "cursor-pointer hover:bg-game-darker/50 transition-colors"
+                                          : ""
                                       }`}
                                     >
-                                      <button
-                                        onClick={() => {
-                                          if (isEditing && isAdmin) {
-                                            toggleItem(user._id, item);
-                                          }
-                                        }}
-                                        disabled={!isEditing || !isAdmin}
+                                      <span
                                         className={`w-4 h-4 flex items-center justify-center ${
                                           hasItem
                                             ? "text-green-400"
                                             : "text-game-text-muted"
-                                        } ${
-                                          isEditing && isAdmin
-                                            ? "cursor-pointer hover:text-green-400"
-                                            : ""
                                         }`}
                                       >
                                         {hasItem ? "✓" : "✗"}
-                                      </button>
+                                      </span>
                                       <span>{item}</span>
                                     </div>
                                   );
@@ -332,7 +340,9 @@ export default function EquipmentPage() {
                                           Cancel
                                         </button>
                                         <button
-                                          onClick={() => saveItems(user._id)}
+                                          onClick={() =>
+                                            saveItems(user._id, user.name)
+                                          }
                                           disabled={savingUserKey === user._id}
                                           className="px-3 py-1 text-xs font-medium text-white bg-game-accent rounded hover:bg-game-accent-hover disabled:opacity-50 transition-colors cursor-pointer"
                                         >
@@ -369,6 +379,37 @@ export default function EquipmentPage() {
             })}
           </div>
         </main>
+
+        {/* Success Dialog */}
+        {showSuccessDialog && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm">
+            <div className="bg-game-card border border-game-border rounded-lg p-6 shadow-2xl max-w-sm mx-4 animate-in fade-in zoom-in duration-200">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-green-400/20">
+                  <svg
+                    className="w-6 h-6 text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-green-400">Success</p>
+                  <p className="text-xs text-game-text mt-1">
+                    {successMessage}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

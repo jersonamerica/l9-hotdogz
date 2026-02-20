@@ -19,7 +19,7 @@ export async function GET() {
     const totalEquipment = await Equipment.countDocuments();
 
     const members = await User.find({ isOnboarded: true })
-      .select("name image cp mastery gearLog role createdAt equipmentType userEquipmentItems")
+      .select("name image cp mastery gearLog role createdAt equipmentType userEquipmentItems attendancePoints")
       .populate("gearLog.equipment", "name type")
       .sort({ cp: -1 })
       .lean();
