@@ -20,7 +20,7 @@ export async function GET() {
 
     const members = await User.find({ isOnboarded: true })
       .select(
-        "name image cp mastery gearLog role createdAt equipmentType userEquipmentItems attendancePoints",
+        "name image cp mastery gearLog role createdAt equipmentType userEquipmentItems userAbilities attendancePoints",
       )
       .populate("gearLog.equipment", "name type")
       .sort({ cp: -1 })

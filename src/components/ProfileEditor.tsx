@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MASTERY_OPTIONS, MASTERY_IMAGES } from "@/lib/constants";
+import { ABILITIES } from "@/lib/abilities";
 import Image from "next/image";
 import { useCrudMutation } from "@/hooks/useCrudMutation";
 
@@ -46,6 +47,7 @@ interface UserProfile {
   mastery: string;
   equipmentType: string;
   userEquipmentItems: string[];
+  userAbilities: string[];
   gearLog: GearLogEntry[];
   role: string;
 }
@@ -56,6 +58,7 @@ interface UpdateProfilePayload {
   mastery?: string;
   equipmentType?: string;
   userEquipmentItems?: string[];
+  userAbilities?: string[];
   gearLog?: GearLogPayload[];
 }
 
@@ -71,11 +74,12 @@ export default function ProfileEditor() {
       queryKey: ["user"],
       queryFn: () => fetcher<UserProfile>("/api/user"),
     });
-  const { data: equipmentData, isLoading: eqLoading } =
-    useQuery<EquipmentItem[]>({
-      queryKey: ["equipment"],
-      queryFn: () => fetcher<EquipmentItem[]>("/api/equipment"),
-    });
+  const { data: equipmentData, isLoading: eqLoading } = useQuery<
+    EquipmentItem[]
+  >({
+    queryKey: ["equipment"],
+    queryFn: () => fetcher<EquipmentItem[]>("/api/equipment"),
+  });
   const loading = profileLoading || eqLoading;
   const equipment = equipmentData || [];
 
@@ -92,6 +96,7 @@ export default function ProfileEditor() {
   const [mastery, setMastery] = useState("");
   const [equipmentType, setEquipmentType] = useState("Plate");
   const [userEquipmentItems, setUserEquipmentItems] = useState<string[]>([]);
+  const [userAbilities, setUserAbilities] = useState<string[]>([]);
   const [gearLog, setGearLog] = useState<GearLogEntry[]>([]);
 
   // Equipment suggestions
@@ -146,6 +151,7 @@ export default function ProfileEditor() {
       setMasterySearch(profileData.mastery || "");
       setEquipmentType(profileData.equipmentType || "Plate");
       setUserEquipmentItems(profileData.userEquipmentItems || []);
+      setUserAbilities(profileData.userAbilities || []);
       setGearLog(profileData.gearLog || []);
     }
   }, [profileData, profile]);
@@ -185,6 +191,7 @@ export default function ProfileEditor() {
         mastery,
         equipmentType,
         userEquipmentItems,
+        userAbilities,
         gearLog: gearLogPayload,
       });
 
@@ -224,6 +231,14 @@ export default function ProfileEditor() {
   const toggleEquipmentItem = (item: string) => {
     setUserEquipmentItems((prev) =>
       prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item],
+    );
+  };
+
+  const toggleAbility = (ability: string) => {
+    setUserAbilities((prev) =>
+      prev.includes(ability)
+        ? prev.filter((item) => item !== ability)
+        : [...prev, ability],
     );
   };
 
@@ -525,7 +540,29 @@ export default function ProfileEditor() {
 
           <div>
             <label className="block text-sm font-medium text-game-text-muted mb-2">
-              Owned Equipment ({equipmentType})
+              Abilities
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {ABILITIES.map((ability) => (
+                <label
+                  key={ability}
+                  className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={userAbilities.includes(ability)}
+                    onChange={() => toggleAbility(ability)}
+                    className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
+                  />
+                  <span className="text-sm text-game-text">{ability}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-game-text-muted mb-2">
+              Owned Legendary Equipment ({equipmentType})
             </label>
             <div className="grid grid-cols-2 gap-2">
               {EQUIPMENT_ITEMS[equipmentType]?.map((item) => (

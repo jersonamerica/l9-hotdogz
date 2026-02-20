@@ -46,6 +46,10 @@ const userSchema = new Schema(
         default: "",
       },
     ],
+    userAbilities: {
+      type: [String],
+      default: [],
+    },
     isOnboarded: {
       type: Boolean,
       default: false,

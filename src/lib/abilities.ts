@@ -1,0 +1,15 @@
+export const ABILITIES = [
+  "Disarm",
+  "Overcome",
+  "War Cry",
+  "Reverse Time",
+  "Near Escape",
+  "Purify",
+  "Supersense",
+  "Magnetic Field",
+  "Create Zone",
+  "Deathblow",
+  "Continous Healing",
+  "Anatomy",
+  "Gamble",
+] as const;
