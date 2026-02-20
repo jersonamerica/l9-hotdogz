@@ -1,8 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { MASTERY_IMAGES } from "@/lib/constants";
+
+const fetcher = async <T,>(url: string): Promise<T> => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Request failed");
+  }
+  return res.json() as Promise<T>;
+};
 
 interface GearLogEntry {
   equipment: {
@@ -35,8 +43,11 @@ export default function MemberDirectory() {
   const {
     data: members = [],
     isLoading: loading,
-    mutate,
-  } = useSWR<Member[]>("/api/members");
+    refetch,
+  } = useQuery<Member[]>({
+    queryKey: ["members"],
+    queryFn: () => fetcher<Member[]>("/api/members"),
+  });
 
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("cp");
@@ -91,7 +102,7 @@ export default function MemberDirectory() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await mutate();
+    await refetch();
     setRefreshing(false);
   };
 

@@ -1,7 +1,7 @@
 "use client";
 
-import useSWR from "swr";
 import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
 import WelcomeBanner from "./WelcomeBanner";
 import GuildStats from "./GuildStats";
 import GearLeaderboard from "./GearLeaderboard";
@@ -9,10 +9,24 @@ import StillNeeded from "./StillNeeded";
 import AnnouncementBoard from "./AnnouncementBoard";
 import ActivityLog from "./ActivityLog";
 
+const fetcher = async <T,>(url: string): Promise<T> => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Request failed");
+  }
+  return res.json() as Promise<T>;
+};
+
 export default function DashboardContent() {
   const { data: session } = useSession();
-  const { data: stats } = useSWR("/api/stats");
-  const { data: user } = useSWR("/api/user");
+  const { data: stats } = useQuery({
+    queryKey: ["stats"],
+    queryFn: () => fetcher("/api/stats"),
+  });
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: () => fetcher("/api/user"),
+  });
 
   const ign = user?.name || null;
 

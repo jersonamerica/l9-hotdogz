@@ -19,7 +19,9 @@ export async function GET() {
     const totalEquipment = await Equipment.countDocuments();
 
     const members = await User.find({ isOnboarded: true })
-      .select("name image cp mastery gearLog role createdAt equipmentType userEquipmentItems attendancePoints")
+      .select(
+        "name image cp mastery gearLog role createdAt equipmentType userEquipmentItems attendancePoints",
+      )
       .populate("gearLog.equipment", "name type")
       .sort({ cp: -1 })
       .lean();
@@ -52,7 +54,7 @@ export async function GET() {
 
     return NextResponse.json(membersWithProgress, {
       headers: {
-        "Cache-Control": "private, s-maxage=30, stale-while-revalidate=60",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {

@@ -2,10 +2,17 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import useSWR from "swr";
 import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
+import { useCrudMutation } from "@/hooks/useCrudMutation";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const fetcher = async <T,>(url: string): Promise<T> => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Request failed");
+  }
+  return res.json() as Promise<T>;
+};
 
 interface User {
   _id: string;
@@ -25,15 +32,12 @@ export default function EquipmentPage() {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "admin";
 
-  const { data: membersData = [], mutate } = useSWR<User[]>(
-    "/api/members",
-    fetcher,
-    {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      revalidateIfStale: true,
-    },
-  );
+  const { data: membersData = [], refetch } = useQuery<User[]>({
+    queryKey: ["members"],
+    queryFn: () => fetcher<User[]>("/api/members"),
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
 
   const [expandedUsers, setExpandedUsers] = useState<Record<string, boolean>>(
     {},
@@ -46,6 +50,15 @@ export default function EquipmentPage() {
   const [savedItems, setSavedItems] = useState<Record<string, string[]>>({});
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  const updateEquipmentMutation = useCrudMutation<
+    { userId: string; userEquipmentItems: string[] },
+    unknown
+  >({
+    method: "PUT",
+    url: "/api/user",
+    invalidateKeys: [["members"], ["stats"], ["activity"]],
+  });
 
   const categories = [
     {
@@ -115,34 +128,28 @@ export default function EquipmentPage() {
     try {
       const newItems = editingItems[userId] || [];
 
-      const res = await fetch("/api/user", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          userEquipmentItems: newItems,
-        }),
+      await updateEquipmentMutation.mutateAsync({
+        userId,
+        userEquipmentItems: newItems,
       });
 
-      if (res.ok) {
-        // Update local state immediately
-        setSavedItems((prev) => ({
-          ...prev,
-          [userId]: newItems,
-        }));
+      // Update local state immediately
+      setSavedItems((prev) => ({
+        ...prev,
+        [userId]: newItems,
+      }));
 
-        setEditingUserKey(null);
-        setEditingItems({});
+      setEditingUserKey(null);
+      setEditingItems({});
 
-        // Show success dialog
-        setSuccessMessage(`${userName}'s equipment updated successfully!`);
-        setShowSuccessDialog(true);
+      // Show success dialog
+      setSuccessMessage(`${userName}'s equipment updated successfully!`);
+      setShowSuccessDialog(true);
 
-        // Auto-close dialog after 2 seconds
-        setTimeout(() => {
-          setShowSuccessDialog(false);
-        }, 2000);
-      }
+      // Auto-close dialog after 2 seconds
+      setTimeout(() => {
+        setShowSuccessDialog(false);
+      }, 2000);
     } catch (error) {
       console.error("Failed to update equipment items:", error);
     } finally {
@@ -163,7 +170,7 @@ export default function EquipmentPage() {
         <main className="w-[90%] mx-auto py-8">
           <div className="flex items-center justify-end mb-6">
             <button
-              onClick={() => mutate()}
+              onClick={() => refetch()}
               className="p-2 text-game-text-muted hover:text-game-accent transition-colors cursor-pointer disabled:opacity-50"
               title="Refresh"
             >

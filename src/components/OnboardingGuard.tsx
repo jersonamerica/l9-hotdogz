@@ -3,6 +3,11 @@
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+
+interface UserData {
+  isOnboarded: boolean;
+}
 
 export default function OnboardingGuard({
   children,
@@ -11,39 +16,34 @@ export default function OnboardingGuard({
 }) {
   const { status } = useSession();
   const pathname = usePathname();
-  const [checking, setChecking] = useState(true);
-  const [onboarded, setOnboarded] = useState<boolean | null>(null);
+  const [localOnboarded, setLocalOnboarded] = useState<boolean | null>(null);
 
+  // Check localStorage flag first (set during onboarding submit)
   useEffect(() => {
-    if (status !== "authenticated") {
-      setChecking(false);
-      return;
+    if (status === "authenticated") {
+      const localFlag = localStorage.getItem("onboarding_complete");
+      if (localFlag === "true") {
+        setLocalOnboarded(true);
+        // Clean up the flag after a delay to let API catch up
+        setTimeout(() => localStorage.removeItem("onboarding_complete"), 5000);
+      }
     }
+  }, [status]);
 
-    // Check localStorage flag first (set during onboarding submit)
-    if (localStorage.getItem("onboarding_complete") === "true") {
-      setOnboarded(true);
-      setChecking(false);
-      // Clean up the flag after a delay to let API catch up
-      setTimeout(() => localStorage.removeItem("onboarding_complete"), 5000);
-      return;
-    }
+  // Fetch onboarding status from API (source of truth)
+  const { data: userData, isLoading: isLoadingUser } = useQuery<UserData>({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const res = await fetch("/api/user");
+      if (!res.ok) throw new Error("Failed to fetch user");
+      return res.json();
+    },
+    enabled: status === "authenticated",
+    staleTime: 0, // Always check fresh for onboarding status
+  });
 
-    // Check onboarding status from the API (source of truth)
-    fetch("/api/user")
-      .then((res) => {
-        if (res.ok) return res.json();
-        throw new Error("Failed to fetch");
-      })
-      .then((data) => {
-        setOnboarded(!!data.isOnboarded);
-        setChecking(false);
-      })
-      .catch(() => {
-        setOnboarded(false);
-        setChecking(false);
-      });
-  }, [status, pathname]);
+  const onboarded = localOnboarded ?? userData?.isOnboarded ?? null;
+  const checking = isLoadingUser;
 
   useEffect(() => {
     if (checking || status !== "authenticated" || onboarded === null) return;

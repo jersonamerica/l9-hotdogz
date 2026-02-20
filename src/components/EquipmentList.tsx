@@ -1,9 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import useSWR, { mutate } from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import EquipmentForm from "./EquipmentForm";
 import EditMemberGearModal from "./EditMemberGearModal";
+import { useCrudMutation } from "@/hooks/useCrudMutation";
+
+const fetcher = async <T,>(url: string): Promise<T> => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Request failed");
+  }
+  return res.json() as Promise<T>;
+};
 
 interface EquipmentItem {
   _id: string;
@@ -25,21 +34,27 @@ export default function EquipmentList({
 }: {
   isAdmin?: boolean;
 }) {
-  const { data: equipment = [], isLoading: eqLoading } = useSWR<
-    EquipmentItem[]
-  >("/api/equipment", {
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
-    dedupingInterval: 2000,
+  const queryClient = useQueryClient();
+  const {
+    data: equipment = [],
+    isLoading: eqLoading,
+    refetch: refetchEquipment,
+  } = useQuery<EquipmentItem[]>({
+    queryKey: ["equipment"],
+    queryFn: () => fetcher<EquipmentItem[]>("/api/equipment"),
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
-  const { data: members = [], isLoading: memLoading } = useSWR<MemberNeed[]>(
-    "/api/members",
-    {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      dedupingInterval: 2000,
-    },
-  );
+  const {
+    data: members = [],
+    isLoading: memLoading,
+    refetch: refetchMembers,
+  } = useQuery<MemberNeed[]>({
+    queryKey: ["members"],
+    queryFn: () => fetcher<MemberNeed[]>("/api/members"),
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
   const loading = eqLoading || memLoading;
 
   const [showForm, setShowForm] = useState(false);
@@ -53,15 +68,18 @@ export default function EquipmentList({
     useState<EquipmentItem | null>(null);
   const [showGearModal, setShowGearModal] = useState(false);
 
+  const deleteEquipmentMutation = useCrudMutation<{ id: string }, unknown>({
+    method: "DELETE",
+    url: (input) => `/api/equipment/${input.id}`,
+    invalidateKeys: [["equipment"], ["members"], ["stats"], ["activity"]],
+  });
+
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this equipment?")) return;
 
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/equipment/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        doMutations();
-      }
+      await deleteEquipmentMutation.mutateAsync({ id });
     } catch (error) {
       console.error("Failed to delete equipment:", error);
     } finally {
@@ -70,10 +88,10 @@ export default function EquipmentList({
   };
 
   const doMutations = () => {
-    mutate("/api/equipment");
-    mutate("/api/members");
-    mutate("/api/stats");
-    mutate("/api/activity");
+    queryClient.invalidateQueries({ queryKey: ["equipment"] });
+    queryClient.invalidateQueries({ queryKey: ["members"] });
+    queryClient.invalidateQueries({ queryKey: ["stats"] });
+    queryClient.invalidateQueries({ queryKey: ["activity"] });
   };
 
   const handleSave = () => {
@@ -95,20 +113,7 @@ export default function EquipmentList({
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      // Fetch fresh data from API
-      const [membersRes, equipmentRes] = await Promise.all([
-        fetch("/api/members"),
-        fetch("/api/equipment"),
-      ]);
-
-      if (membersRes.ok && equipmentRes.ok) {
-        const freshMembers = await membersRes.json();
-        const freshEquipment = await equipmentRes.json();
-
-        // Update cache with fresh data
-        mutate("/api/members", freshMembers, false);
-        mutate("/api/equipment", freshEquipment, false);
-      }
+      await Promise.all([refetchMembers(), refetchEquipment()]);
     } catch (error) {
       console.error("Failed to refresh:", error);
     } finally {
@@ -369,12 +374,6 @@ export default function EquipmentList({
             setShowGearModal(false);
             setSelectedMember(null);
             setSelectedEquipment(null);
-          }}
-          onSave={async () => {
-            const temp = expandedId;
-            setExpandedId(null); // Close expanded row to force fresh render
-            await handleRefresh();
-            setExpandedId(temp);
           }}
         />
       )}

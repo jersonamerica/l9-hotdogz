@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import useSWR, { mutate } from "swr";
+import { useQuery } from "@tanstack/react-query";
+import { useCrudMutation } from "@/hooks/useCrudMutation";
+
+const fetcher = async <T,>(url: string): Promise<T> => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Request failed");
+  }
+  return res.json() as Promise<T>;
+};
 
 interface Announcement {
   _id: string;
@@ -23,7 +32,10 @@ export default function AnnouncementBoard() {
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
   const { data: announcements = [], isLoading: loading } =
-    useSWR<Announcement[]>("/api/announcements");
+    useQuery<Announcement[]>({
+      queryKey: ["announcements"],
+      queryFn: () => fetcher<Announcement[]>("/api/announcements"),
+    });
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -32,6 +44,30 @@ export default function AnnouncementBoard() {
   const [pinned, setPinned] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const createAnnouncementMutation = useCrudMutation<
+    { title: string; content: string; pinned: boolean },
+    Announcement
+  >({
+    method: "POST",
+    url: "/api/announcements",
+    invalidateKeys: [["announcements"], ["activity"]],
+  });
+
+  const updateAnnouncementMutation = useCrudMutation<
+    { id: string; title: string; content: string; pinned: boolean },
+    Announcement
+  >({
+    method: "PUT",
+    url: (input) => `/api/announcements/${input.id}`,
+    invalidateKeys: [["announcements"], ["activity"]],
+  });
+
+  const deleteAnnouncementMutation = useCrudMutation<{ id: string }, unknown>({
+    method: "DELETE",
+    url: (input) => `/api/announcements/${input.id}`,
+    invalidateKeys: [["announcements"], ["activity"]],
+  });
 
   const resetForm = () => {
     setTitle("");
@@ -54,27 +90,20 @@ export default function AnnouncementBoard() {
     setSubmitting(true);
     try {
       if (editingId) {
-        const res = await fetch(`/api/announcements/${editingId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, content, pinned }),
+        await updateAnnouncementMutation.mutateAsync({
+          id: editingId,
+          title,
+          content,
+          pinned,
         });
-        if (res.ok) {
-          resetForm();
-          mutate("/api/announcements");
-          mutate("/api/activity");
-        }
+        resetForm();
       } else {
-        const res = await fetch("/api/announcements", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, content, pinned }),
+        await createAnnouncementMutation.mutateAsync({
+          title,
+          content,
+          pinned,
         });
-        if (res.ok) {
-          resetForm();
-          mutate("/api/announcements");
-          mutate("/api/activity");
-        }
+        resetForm();
       }
     } catch (error) {
       console.error("Failed to save announcement:", error);
@@ -86,13 +115,7 @@ export default function AnnouncementBoard() {
   const handleDelete = async (id: string) => {
     setDeletingId(null);
     try {
-      const res = await fetch(`/api/announcements/${id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        mutate("/api/announcements");
-        mutate("/api/activity");
-      }
+      await deleteAnnouncementMutation.mutateAsync({ id });
     } catch (error) {
       console.error("Failed to delete announcement:", error);
     }

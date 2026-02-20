@@ -1,25 +1,26 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
-import { SWRConfig } from "swr";
-import { ReactNode } from "react";
-import { fetcher } from "@/lib/fetcher";
+import { ReactNode, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: true,
+          },
+        },
+      }),
+  );
+
   return (
     <SessionProvider>
-      <SWRConfig
-        value={{
-          fetcher,
-          revalidateOnFocus: true,
-          revalidateOnMount: true,
-          revalidateOnReconnect: false,
-          revalidateIfStale: true,
-          dedupingInterval: 5000,
-        }}
-      >
+      <QueryClientProvider client={queryClient}>
         {children}
-      </SWRConfig>
+      </QueryClientProvider>
     </SessionProvider>
   );
 }

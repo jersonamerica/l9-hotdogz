@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { mutate } from "swr";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCrudMutation } from "@/hooks/useCrudMutation";
 
 interface GearLogEntry {
   _id?: string;
@@ -25,17 +26,24 @@ export default function EditMemberGearModal({
   equipment,
   isOpen,
   onClose,
-  onSave,
 }: {
   member: Member | null;
   equipment?: { _id: string; name: string; type: "gear" | "special" };
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => Promise<void>;
 }) {
+  const queryClient = useQueryClient();
   const [gearLog, setGearLog] = useState<GearLogEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [removeConfirmIdx, setRemoveConfirmIdx] = useState<number | null>(null);
+
+  const updateGearLogMutation = useCrudMutation<
+    { userId: string; gearLog: { equipment: string; quantity: number }[] },
+    unknown
+  >({
+    method: "PUT",
+    url: "/api/user",
+  });
 
   useEffect(() => {
     if (member) {
@@ -67,34 +75,17 @@ export default function EditMemberGearModal({
         quantity: entry.quantity,
       }));
 
-      const res = await fetch("/api/user", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: member._id,
-          gearLog: gearLogPayload,
-        }),
+      await updateGearLogMutation.mutateAsync({
+        userId: member._id,
+        gearLog: gearLogPayload,
       });
 
-      if (res.ok) {
-        const [membersRes, equipmentRes] = await Promise.all([
-          fetch("/api/members"),
-          fetch("/api/equipment"),
-        ]);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["members"] }),
+        queryClient.invalidateQueries({ queryKey: ["equipment"] }),
+      ]);
 
-        if (membersRes.ok && equipmentRes.ok) {
-          const freshMembers = await membersRes.json();
-          const freshEquipment = await equipmentRes.json();
-
-          // Update SWR cache with fresh data
-          mutate("/api/members", freshMembers, false);
-          mutate("/api/equipment", freshEquipment, false);
-        }
-        onClose();
-        if (onSave) {
-          await onSave();
-        }
-      }
+      onClose();
     } catch (error) {
       console.error("Failed to remove item:", error);
     } finally {
@@ -111,21 +102,18 @@ export default function EditMemberGearModal({
         quantity: entry.quantity,
       }));
 
-      const res = await fetch("/api/user", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: member._id,
-          gearLog: gearLogPayload,
-        }),
+      await updateGearLogMutation.mutateAsync({
+        userId: member._id,
+        gearLog: gearLogPayload,
       });
 
-      if (res.ok) {
-        mutate("/api/members");
-        mutate("/api/equipment");
-        mutate("/api/activity");
-        onClose();
-      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["members"] }),
+        queryClient.invalidateQueries({ queryKey: ["equipment"] }),
+        queryClient.invalidateQueries({ queryKey: ["activity"] }),
+      ]);
+
+      onClose();
     } catch (error) {
       console.error("Failed to update gear log:", error);
     } finally {

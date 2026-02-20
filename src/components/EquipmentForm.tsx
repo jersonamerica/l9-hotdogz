@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useCrudMutation } from "@/hooks/useCrudMutation";
 
 interface EquipmentItem {
   _id: string;
@@ -25,38 +26,47 @@ export default function EquipmentForm({
   const [type, setType] = useState<"gear" | "special">(
     equipment?.type || "gear",
   );
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const createMutation = useCrudMutation<
+    { name: string; type: "gear" | "special" },
+    EquipmentItem
+  >({
+    method: "POST",
+    url: "/api/equipment",
+    invalidateKeys: [["equipment"], ["members"], ["stats"], ["activity"]],
+  });
+
+  const updateMutation = useCrudMutation<
+    { id: string; name: string; type: "gear" | "special" },
+    EquipmentItem
+  >({
+    method: "PUT",
+    url: (input) => `/api/equipment/${input.id}`,
+    invalidateKeys: [["equipment"], ["members"], ["stats"], ["activity"]],
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
     try {
-      const url = isEditing
-        ? `/api/equipment/${equipment._id}`
-        : "/api/equipment";
-      const method = isEditing ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, type }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to save equipment");
+      if (isEditing) {
+        await updateMutation.mutateAsync({
+          id: equipment._id,
+          name,
+          type,
+        });
+      } else {
+        await createMutation.mutateAsync({ name, type });
       }
-
       onSave();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
     }
   };
+
+  const loading = createMutation.isPending || updateMutation.isPending;
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">

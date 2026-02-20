@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
+
+const fetcher = async <T,>(url: string): Promise<T> => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Request failed");
+  }
+  return res.json() as Promise<T>;
+};
 
 interface ActivityEntry {
   _id: string;
@@ -85,13 +93,16 @@ export default function ActivityLog() {
   const {
     data: activities = [],
     isLoading: loading,
-    mutate,
-  } = useSWR<ActivityEntry[]>("/api/activity");
+    refetch,
+  } = useQuery<ActivityEntry[]>({
+    queryKey: ["activity"],
+    queryFn: () => fetcher<ActivityEntry[]>("/api/activity"),
+  });
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await mutate();
+    await refetch();
     setRefreshing(false);
   };
 

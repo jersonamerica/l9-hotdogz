@@ -1,9 +1,18 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import useSWR, { mutate } from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { MASTERY_OPTIONS, MASTERY_IMAGES } from "@/lib/constants";
 import Image from "next/image";
+import { useCrudMutation } from "@/hooks/useCrudMutation";
+
+const fetcher = async <T,>(url: string): Promise<T> => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Request failed");
+  }
+  return res.json() as Promise<T>;
+};
 
 interface PopulatedEquipment {
   _id: string;
@@ -41,6 +50,15 @@ interface UserProfile {
   role: string;
 }
 
+interface UpdateProfilePayload {
+  name?: string;
+  cp?: number;
+  mastery?: string;
+  equipmentType?: string;
+  userEquipmentItems?: string[];
+  gearLog?: GearLogPayload[];
+}
+
 const EQUIPMENT_ITEMS: Record<string, string[]> = {
   Plate: ["Helm", "Armor", "Gaiters", "Gauntlets", "Greaves"],
   Leather: ["Hood", "Vest", "Leather Pants", "Wristband", "Boots"],
@@ -49,9 +67,15 @@ const EQUIPMENT_ITEMS: Record<string, string[]> = {
 
 export default function ProfileEditor() {
   const { data: profileData, isLoading: profileLoading } =
-    useSWR<UserProfile>("/api/user");
+    useQuery<UserProfile>({
+      queryKey: ["user"],
+      queryFn: () => fetcher<UserProfile>("/api/user"),
+    });
   const { data: equipmentData, isLoading: eqLoading } =
-    useSWR<EquipmentItem[]>("/api/equipment");
+    useQuery<EquipmentItem[]>({
+      queryKey: ["equipment"],
+      queryFn: () => fetcher<EquipmentItem[]>("/api/equipment"),
+    });
   const loading = profileLoading || eqLoading;
   const equipment = equipmentData || [];
 
@@ -99,7 +123,20 @@ export default function ProfileEditor() {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  // Sync SWR data into local state when it arrives
+  const updateProfileMutation = useCrudMutation<
+    UpdateProfilePayload,
+    UserProfile
+  >({
+    method: "PUT",
+    url: "/api/user",
+    invalidateKeys: [["user"], ["members"], ["stats"], ["activity"]],
+    onSuccess: (data) => {
+      setProfile(data);
+      setGearLog(data.gearLog || []);
+    },
+  });
+
+  // Sync query data into local state when it arrives
   useEffect(() => {
     if (profileData && !profile) {
       setProfile(profileData);
@@ -142,33 +179,16 @@ export default function ProfileEditor() {
         quantity: entry.quantity,
       }));
 
-      const res = await fetch("/api/user", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          cp: Number(cp) || 0,
-          mastery,
-          equipmentType,
-          userEquipmentItems,
-          gearLog: gearLogPayload,
-        }),
+      await updateProfileMutation.mutateAsync({
+        name,
+        cp: Number(cp) || 0,
+        mastery,
+        equipmentType,
+        userEquipmentItems,
+        gearLog: gearLogPayload,
       });
 
-      if (res.ok) {
-        const data: UserProfile = await res.json();
-        setProfile(data);
-        setGearLog(data.gearLog || []);
-        setMessage({ type: "success", text: "Profile saved successfully!" });
-        // Invalidate caches that depend on user data
-        mutate("/api/user");
-        mutate("/api/members");
-        mutate("/api/stats");
-        mutate("/api/activity");
-      } else {
-        const err = await res.json();
-        setMessage({ type: "error", text: err.error || "Failed to save" });
-      }
+      setMessage({ type: "success", text: "Profile saved successfully!" });
     } catch {
       setMessage({ type: "error", text: "Something went wrong" });
     } finally {
@@ -216,26 +236,12 @@ export default function ProfileEditor() {
   const saveGearLog = async (updatedGearLog: GearLogEntry[]) => {
     setGearLog(updatedGearLog);
     try {
-      const res = await fetch("/api/user", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          cp: Number(cp) || 0,
-          mastery,
-          gearLog: toGearLogPayload(updatedGearLog),
-        }),
+      await updateProfileMutation.mutateAsync({
+        name,
+        cp: Number(cp) || 0,
+        mastery,
+        gearLog: toGearLogPayload(updatedGearLog),
       });
-      if (res.ok) {
-        const data: UserProfile = await res.json();
-        setGearLog(data.gearLog || []);
-        mutate("/api/user");
-        mutate("/api/members");
-        mutate("/api/stats");
-        mutate("/api/activity");
-      } else {
-        setMessage({ type: "error", text: "Failed to update gear log" });
-      }
     } catch {
       setMessage({ type: "error", text: "Something went wrong" });
     }

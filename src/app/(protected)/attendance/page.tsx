@@ -1,10 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import useSWR from "swr";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const fetcher = async <T,>(url: string): Promise<T> => {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error("Request failed");
+  }
+  return res.json() as Promise<T>;
+};
 
 interface Participant {
   _id: string;
@@ -32,12 +38,64 @@ export default function AttendancePage() {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "admin";
 
-  const { data: events = [], mutate: mutateEvents } = useSWR<EventData[]>(
-    "/api/events",
-    fetcher,
-  );
+  const queryClient = useQueryClient();
+  const { data: events = [] } = useQuery<EventData[]>({
+    queryKey: ["events"],
+    queryFn: () => fetcher<EventData[]>("/api/events"),
+  });
 
-  const { data: members = [] } = useSWR<Member[]>("/api/members", fetcher);
+  const { data: members = [] } = useQuery<Member[]>({
+    queryKey: ["members"],
+    queryFn: () => fetcher<Member[]>("/api/members"),
+  });
+
+  const createEventMutation = useMutation({
+    mutationFn: async (payload: {
+      title: string;
+      participantIds: string[];
+    }) => {
+      const res = await fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to create event");
+      }
+      return res.json();
+    },
+  });
+
+  const updateEventMutation = useMutation({
+    mutationFn: async (payload: {
+      id: string;
+      title: string;
+      participantIds: string[];
+    }) => {
+      const res = await fetch(`/api/events/${payload.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: payload.title,
+          participantIds: payload.participantIds,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to update event");
+      }
+      return res.json();
+    },
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/events/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        throw new Error("Failed to delete event");
+      }
+      return res.json();
+    },
+  });
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventData | null>(null);
@@ -107,39 +165,32 @@ export default function AttendancePage() {
     setSaving(true);
     try {
       if (editingEvent) {
-        // Update existing event
-        const res = await fetch(`/api/events/${editingEvent._id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: title.trim(),
-            participantIds: selectedParticipants,
-          }),
+        await updateEventMutation.mutateAsync({
+          id: editingEvent._id,
+          title: title.trim(),
+          participantIds: selectedParticipants,
         });
-        if (res.ok) {
-          await mutateEvents();
-          closeModal();
-          setSuccessMessage("Event updated successfully!");
-          setShowSuccess(true);
-          setTimeout(() => setShowSuccess(false), 2000);
-        }
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["events"] }),
+          queryClient.invalidateQueries({ queryKey: ["members"] }),
+        ]);
+        closeModal();
+        setSuccessMessage("Event updated successfully!");
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 2000);
       } else {
-        // Create new event
-        const res = await fetch("/api/events", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: title.trim(),
-            participantIds: selectedParticipants,
-          }),
+        await createEventMutation.mutateAsync({
+          title: title.trim(),
+          participantIds: selectedParticipants,
         });
-        if (res.ok) {
-          await mutateEvents();
-          closeModal();
-          setSuccessMessage("Event created successfully!");
-          setShowSuccess(true);
-          setTimeout(() => setShowSuccess(false), 2000);
-        }
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["events"] }),
+          queryClient.invalidateQueries({ queryKey: ["members"] }),
+        ]);
+        closeModal();
+        setSuccessMessage("Event created successfully!");
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 2000);
       }
     } catch (error) {
       console.error("Failed to save event:", error);
@@ -152,17 +203,16 @@ export default function AttendancePage() {
     if (!deletingEventId) return;
 
     try {
-      const res = await fetch(`/api/events/${deletingEventId}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        await mutateEvents();
-        setShowDeleteConfirm(false);
-        setDeletingEventId(null);
-        setSuccessMessage("Event deleted successfully!");
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 2000);
-      }
+      await deleteEventMutation.mutateAsync(deletingEventId);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["events"] }),
+        queryClient.invalidateQueries({ queryKey: ["members"] }),
+      ]);
+      setShowDeleteConfirm(false);
+      setDeletingEventId(null);
+      setSuccessMessage("Event deleted successfully!");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
     } catch (error) {
       console.error("Failed to delete event:", error);
     }
@@ -190,7 +240,10 @@ export default function AttendancePage() {
   };
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-fixed" style={{ backgroundImage: 'url(/bg/attendance_bg.jpg)' }}>
+    <div
+      className="min-h-screen bg-cover bg-center bg-fixed"
+      style={{ backgroundImage: "url(/bg/attendance_bg.jpg)" }}
+    >
       <div className="min-h-screen bg-black/60">
         <main className="w-[90%] mx-auto py-8 flex gap-6">
           {/* Left Sidebar - Members Attendance Points */}
