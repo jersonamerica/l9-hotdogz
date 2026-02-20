@@ -358,6 +358,8 @@ export default function EquipmentList({
             setShowGearModal(false);
             setSelectedMember(null);
             setSelectedEquipment(null);
+          }}
+          onSave={async () => {
             const temp = expandedId;
             setExpandedId(null); // Close expanded row to force fresh render
             await handleRefresh();

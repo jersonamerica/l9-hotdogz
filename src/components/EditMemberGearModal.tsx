@@ -25,11 +25,13 @@ export default function EditMemberGearModal({
   equipment,
   isOpen,
   onClose,
+  onSave,
 }: {
   member: Member | null;
   equipment?: { _id: string; name: string; type: "gear" | "special" };
   isOpen: boolean;
   onClose: () => void;
+  onSave: () => Promise<void>;
 }) {
   const [gearLog, setGearLog] = useState<GearLogEntry[]>([]);
   const [saving, setSaving] = useState(false);
@@ -89,6 +91,9 @@ export default function EditMemberGearModal({
           mutate("/api/equipment", freshEquipment, false);
         }
         onClose();
+        if (onSave) {
+          await onSave();
+        }
       }
     } catch (error) {
       console.error("Failed to remove item:", error);
