@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MASTERY_IMAGES } from "@/lib/constants";
+import { Button, Input } from "@/components/ui";
 
 const fetcher = async <T,>(url: string): Promise<T> => {
   const res = await fetch(url);
@@ -156,18 +157,20 @@ export default function MemberDirectory() {
 
       {/* Search + Refresh */}
       <div className="flex items-center gap-2">
-        <input
+        <Input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 bg-game-darker/50 border border-game-border rounded px-3 py-2 text-sm text-game-text focus:outline-none focus:border-game-accent placeholder-game-text-muted"
           placeholder="Search members by name or mastery..."
+          className="flex-1"
         />
-        <button
+        <Button
+          size="sm"
+          variant="ghost"
           onClick={handleRefresh}
           disabled={refreshing}
-          className="p-2 text-game-text-muted hover:text-game-accent transition-colors cursor-pointer disabled:opacity-50"
           title="Refresh"
+          className="p-2"
         >
           <svg
             className={`w-5 h-5 ${refreshing ? "animate-spin" : ""}`}
@@ -182,7 +185,7 @@ export default function MemberDirectory() {
               d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
             />
           </svg>
-        </button>
+        </Button>
       </div>
 
       {/* Members table */}

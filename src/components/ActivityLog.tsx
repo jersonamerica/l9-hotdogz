@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Card, CardHeader, Button } from "@/components/ui";
 
 const fetcher = async <T,>(url: string): Promise<T> => {
   const res = await fetch(url);
@@ -117,32 +118,37 @@ export default function ActivityLog() {
   }
 
   return (
-    <div className="bg-game-card/80 backdrop-blur-sm border border-game-border rounded-xl p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-game-text flex items-center gap-2">
-          <span>📜</span> Activity Log
-        </h3>
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="p-1.5 text-game-text-muted hover:text-game-accent transition-colors cursor-pointer disabled:opacity-50"
-          title="Refresh"
-        >
-          <svg
-            className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+    <Card variant="glass">
+      <CardHeader
+        action={
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            title="Refresh"
+            className="p-1.5"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-        </button>
-      </div>
+            <svg
+              className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+          </Button>
+        }
+      >
+        <span className="flex items-center gap-2">
+          <span>📜</span> Activity Log
+        </span>
+      </CardHeader>
 
       {activities.length === 0 ? (
         <p className="text-sm text-game-text-muted text-center py-6 italic">
@@ -191,6 +197,6 @@ export default function ActivityLog() {
           })}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

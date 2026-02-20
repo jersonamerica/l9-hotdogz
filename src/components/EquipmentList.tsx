@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import EquipmentForm from "./EquipmentForm";
 import EditMemberGearModal from "./EditMemberGearModal";
 import { useCrudMutation } from "@/hooks/useCrudMutation";
+import { Button, Input } from "@/components/ui";
 
 const fetcher = async <T,>(url: string): Promise<T> => {
   const res = await fetch(url);
@@ -158,10 +159,7 @@ export default function EquipmentList({
         </h3>
         {isAdmin && (
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowForm(true)}
-              className="px-4 py-2 text-sm font-medium text-white bg-game-accent rounded hover:bg-game-accent-hover transition-colors flex items-center gap-2 cursor-pointer"
-            >
+            <Button onClick={() => setShowForm(true)}>
               <svg
                 className="w-4 h-4"
                 fill="none"
@@ -176,25 +174,27 @@ export default function EquipmentList({
                 />
               </svg>
               Add Equipment
-            </button>
+            </Button>
           </div>
         )}
       </div>
 
       {/* Search + Refresh */}
       <div className="flex items-center gap-2 mb-4">
-        <input
+        <Input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 bg-game-darker/50 border border-game-border rounded px-3 py-2 text-sm text-game-text focus:outline-none focus:border-game-accent placeholder-game-text-muted"
           placeholder="Search equipment by name or type..."
+          className="flex-1"
         />
-        <button
+        <Button
+          size="sm"
+          variant="ghost"
           onClick={handleRefresh}
           disabled={refreshing}
-          className="p-2 text-game-text-muted hover:text-game-accent transition-colors cursor-pointer disabled:opacity-50"
           title="Refresh"
+          className="p-2"
         >
           <svg
             className={`w-5 h-5 ${refreshing ? "animate-spin" : ""}`}
@@ -209,7 +209,7 @@ export default function EquipmentList({
               d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
             />
           </svg>
-        </button>
+        </Button>
       </div>
 
       {filteredEquipment.length === 0 ? (
@@ -285,25 +285,29 @@ export default function EquipmentList({
                       </td>
                       {isAdmin && (
                         <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                          <button
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEdit(item);
                             }}
-                            className="text-game-accent hover:text-game-accent-hover mr-4 transition-colors cursor-pointer"
+                            className="mr-4 text-game-accent hover:text-game-accent-hover"
                           >
                             Edit
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDelete(item._id);
                             }}
                             disabled={deletingId === item._id}
-                            className="text-game-danger hover:text-game-danger-hover disabled:opacity-50 transition-colors cursor-pointer"
+                            className="text-game-danger hover:text-game-danger-hover"
                           >
                             {deletingId === item._id ? "Deleting..." : "Delete"}
-                          </button>
+                          </Button>
                         </td>
                       )}
                     </tr>
@@ -325,22 +329,24 @@ export default function EquipmentList({
                             ) : (
                               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
                                 {needingMembers.map((m) => (
-                                  <button
+                                  <Button
                                     key={m._id}
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => {
                                       setSelectedMember(m);
                                       setSelectedEquipment(item);
                                       setShowGearModal(true);
                                     }}
-                                    className="flex items-center gap-2 bg-game-card/50 border border-game-border rounded px-2 py-1.5 hover:border-game-accent transition-colors cursor-pointer text-left"
+                                    className="flex items-center gap-2 bg-game-card/50 border border-game-border hover:border-game-accent justify-between w-full"
                                   >
                                     <span className="text-xs text-game-text truncate">
                                       {m.name || "Unknown"}
                                     </span>
-                                    <span className="text-xs text-game-text-muted ml-auto">
+                                    <span className="text-xs text-game-text-muted">
                                       {m.cp.toLocaleString()} CP
                                     </span>
-                                  </button>
+                                  </Button>
                                 ))}
                               </div>
                             )}

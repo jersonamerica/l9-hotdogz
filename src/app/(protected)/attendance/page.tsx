@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui";
 
 const fetcher = async <T,>(url: string): Promise<T> => {
   const res = await fetch(url, { cache: "no-store" });
@@ -295,12 +296,9 @@ export default function AttendancePage() {
                 Attendance Events
               </h2>
               {isAdmin && (
-                <button
-                  onClick={openCreateModal}
-                  className="px-4 py-2 text-sm font-medium text-white bg-game-accent rounded-lg hover:bg-game-accent-hover transition-colors cursor-pointer"
-                >
+                <Button onClick={openCreateModal}>
                   + Add Event
-                </button>
+                </Button>
               )}
             </div>
 
@@ -383,21 +381,25 @@ export default function AttendancePage() {
                           <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-game-border">
                             {isAdmin && (
                               <>
-                                <button
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
                                   onClick={() => openEditModal(event)}
-                                  className="px-3 py-1 text-xs font-medium text-game-accent hover:text-game-accent-hover transition-colors cursor-pointer"
+                                  className="text-game-accent hover:text-game-accent-hover"
                                 >
                                   Edit
-                                </button>
-                                <button
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
                                   onClick={() => {
                                     setDeletingEventId(event._id);
                                     setShowDeleteConfirm(true);
                                   }}
-                                  className="px-3 py-1 text-xs font-medium text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                                  className="text-red-400 hover:text-red-300"
                                 >
                                   Delete
-                                </button>
+                                </Button>
                               </>
                             )}
                           </div>
@@ -440,18 +442,22 @@ export default function AttendancePage() {
                       {members.length})
                     </label>
                     <div className="flex gap-2">
-                      <button
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         onClick={selectAll}
-                        className="text-xs text-game-accent hover:text-game-accent-hover cursor-pointer"
+                        className="text-xs text-game-accent"
                       >
                         Select All
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         onClick={deselectAll}
-                        className="text-xs text-game-text-muted hover:text-game-text cursor-pointer"
+                        className="text-xs text-game-text-muted"
                       >
                         Deselect All
-                      </button>
+                      </Button>
                     </div>
                   </div>
 
@@ -498,27 +504,24 @@ export default function AttendancePage() {
 
                 {/* Modal Actions */}
                 <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-game-border">
-                  <button
-                    onClick={closeModal}
-                    className="px-4 py-2 text-xs font-medium text-game-text-muted hover:text-game-text border border-game-border rounded-lg transition-colors cursor-pointer"
-                  >
+                  <Button variant="secondary" onClick={closeModal}>
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="primary"
                     onClick={handleSave}
                     disabled={
                       saving ||
                       !title.trim() ||
                       selectedParticipants.length === 0
                     }
-                    className="px-4 py-2 text-xs font-medium text-white bg-game-accent rounded-lg hover:bg-game-accent-hover disabled:opacity-50 transition-colors cursor-pointer"
                   >
                     {saving
                       ? "Saving..."
                       : editingEvent
                         ? "Update Event"
                         : "Create Event"}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -536,21 +539,22 @@ export default function AttendancePage() {
                   all participants of this event.
                 </p>
                 <div className="flex justify-end gap-2">
-                  <button
+                  <Button
+                    variant="secondary"
                     onClick={() => {
                       setShowDeleteConfirm(false);
                       setDeletingEventId(null);
                     }}
-                    className="px-3 py-1.5 text-xs font-medium text-game-text-muted hover:text-game-text border border-game-border rounded-lg transition-colors cursor-pointer"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="danger"
                     onClick={handleDelete}
-                    className="px-3 py-1.5 text-xs font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors cursor-pointer"
+                    className="bg-red-500 hover:bg-red-600"
                   >
                     Delete
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

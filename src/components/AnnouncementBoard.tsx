@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useCrudMutation } from "@/hooks/useCrudMutation";
+import { Card, CardHeader, Button, Input, Textarea } from "@/components/ui";
 
 const fetcher = async <T,>(url: string): Promise<T> => {
   const res = await fetch(url);
@@ -134,46 +135,44 @@ export default function AnnouncementBoard() {
 
   if (loading) {
     return (
-      <div className="bg-game-card/80 backdrop-blur-sm border border-game-border rounded-xl p-6">
+      <Card variant="glass">
         <div className="flex justify-center py-8">
           <div className="animate-spin rounded-full h-6 w-6 border-2 border-game-border border-t-game-accent"></div>
         </div>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-game-card/80 backdrop-blur-sm border border-game-border rounded-xl p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-game-text flex items-center gap-2">
+    <Card variant="glass">
+      <CardHeader
+        action={
+          isAdmin && !showForm ? (
+            <Button size="sm" onClick={() => setShowForm(true)}>
+              + New
+            </Button>
+          ) : undefined
+        }
+      >
+        <span className="flex items-center gap-2">
           <span>📢</span> Announcements
-        </h3>
-        {isAdmin && !showForm && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-game-accent hover:bg-game-accent-hover text-white text-sm font-medium px-3 py-1 rounded transition-colors cursor-pointer"
-          >
-            + New
-          </button>
-        )}
-      </div>
+        </span>
+      </CardHeader>
 
       {/* Create/Edit form (admin only) */}
       {isAdmin && showForm && (
         <div className="bg-game-darker/50 border border-game-border rounded p-4 space-y-3 mb-4">
-          <input
+          <Input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Announcement title"
-            className="w-full bg-game-dark border border-game-border rounded px-3 py-2 text-sm text-game-text focus:outline-none focus:border-game-accent placeholder-game-text-muted"
           />
-          <textarea
+          <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Announcement content..."
             rows={4}
-            className="w-full bg-game-dark border border-game-border rounded px-3 py-2 text-sm text-game-text focus:outline-none focus:border-game-accent placeholder-game-text-muted resize-none"
           />
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm text-game-text-muted cursor-pointer">
@@ -186,19 +185,16 @@ export default function AnnouncementBoard() {
               Pin this announcement
             </label>
             <div className="flex gap-2">
-              <button
-                onClick={resetForm}
-                className="text-sm text-game-text-muted hover:text-game-text px-3 py-1.5 border border-game-border rounded transition-colors"
-              >
+              <Button variant="secondary" onClick={resetForm}>
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
                 onClick={handleSubmit}
                 disabled={submitting || !title.trim() || !content.trim()}
-                className="bg-game-accent hover:bg-game-accent-hover disabled:opacity-50 text-white text-sm font-medium px-4 py-1.5 rounded transition-colors"
               >
                 {submitting ? "Saving..." : editingId ? "Update" : "Post"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -244,36 +240,44 @@ export default function AnnouncementBoard() {
               {/* Admin actions */}
               {isAdmin && (
                 <div className="flex items-center gap-1 shrink-0">
-                  <button
+                  <Button
+                    size="sm"
+                    variant="ghost"
                     onClick={() => handleEdit(ann)}
-                    className="text-game-text-muted hover:text-game-accent text-xs px-1.5 py-1 transition-colors cursor-pointer"
+                    className="text-xs px-1.5"
                     title="Edit"
                   >
                     ✏️
-                  </button>
+                  </Button>
                   {deletingId === ann._id ? (
                     <div className="flex items-center gap-1">
-                      <button
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         onClick={() => handleDelete(ann._id)}
-                        className="text-game-accent hover:text-game-accent-hover text-xs px-1.5 py-1 transition-colors cursor-pointer"
+                        className="text-xs px-1.5 text-game-accent hover:text-game-accent-hover"
                       >
                         Confirm
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         onClick={() => setDeletingId(null)}
-                        className="text-game-text-muted hover:text-game-text text-xs px-1.5 py-1 transition-colors cursor-pointer"
+                        className="text-xs px-1.5"
                       >
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   ) : (
-                    <button
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       onClick={() => setDeletingId(ann._id)}
-                      className="text-game-text-muted hover:text-game-accent text-xs px-1.5 py-1 transition-colors cursor-pointer"
+                      className="text-xs px-1.5"
                       title="Delete"
                     >
                       🗑️
-                    </button>
+                    </Button>
                   )}
                 </div>
               )}
@@ -281,6 +285,6 @@ export default function AnnouncementBoard() {
           ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

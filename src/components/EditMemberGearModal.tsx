@@ -3,6 +3,14 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCrudMutation } from "@/hooks/useCrudMutation";
+import {
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Input,
+} from "@/components/ui";
 
 interface GearLogEntry {
   _id?: string;
@@ -122,35 +130,14 @@ export default function EditMemberGearModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-game-card border border-game-border rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-game-text">
-            {equipment
-              ? `${equipment.name} - ${member.name}`
-              : `${member.name}'s Item Log`}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-game-text-muted hover:text-game-text transition-colors"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
+    <Modal isOpen={isOpen} onClose={onClose} size="xl">
+      <ModalHeader onClose={onClose}>
+        {equipment
+          ? `${equipment.name} - ${member.name}`
+          : `${member.name}'s Item Log`}
+      </ModalHeader>
 
-        <div className="space-y-3 mb-6">
+      <ModalBody className="space-y-3 max-h-[60vh] overflow-y-auto">
           {gearLog.length === 0 ? (
             <p className="text-sm text-game-text-muted italic">
               No items in gear log
@@ -175,7 +162,7 @@ export default function EditMemberGearModal({
                     </p>
                   </div>
                   <div className="flex items-center gap-2 ml-3">
-                    <input
+                    <Input
                       type="number"
                       min={1}
                       value={entry.quantity}
@@ -185,68 +172,54 @@ export default function EditMemberGearModal({
                           Math.max(1, Number(e.target.value)),
                         )
                       }
-                      className="w-16 bg-game-darker border border-game-border rounded px-2 py-1 text-sm text-game-text focus:outline-none focus:border-game-accent text-center"
+                      className="w-16 text-center"
                     />
-                    <button
+                    <Button
+                      size="sm"
+                      variant="danger"
                       onClick={() => setRemoveConfirmIdx(idx)}
-                      className="px-2 py-1 text-xs font-medium text-white bg-game-danger rounded hover:bg-game-danger-hover transition-colors cursor-pointer"
                     >
                       Remove
-                    </button>
+                    </Button>
                   </div>
                 </div>
               );
             })
           )}
-        </div>
+      </ModalBody>
 
-        <div className="flex justify-end gap-3 border-t border-game-border pt-4">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-game-text-muted hover:text-game-text border border-game-border rounded transition-colors cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 text-sm font-medium text-white bg-game-accent rounded hover:bg-game-accent-hover disabled:opacity-50 transition-colors cursor-pointer"
-          >
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
+      <ModalFooter>
+        <Button variant="secondary" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button variant="primary" onClick={handleSave} disabled={saving}>
+          {saving ? "Saving..." : "Save Changes"}
+        </Button>
+      </ModalFooter>
 
-        {/* Remove confirmation dialog */}
-        {removeConfirmIdx !== null && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-            <div className="bg-game-card border border-game-border rounded p-6 max-w-sm w-full mx-4">
-              <h4 className="text-game-text font-semibold mb-2">Remove Item</h4>
-              <p className="text-sm text-game-text-muted mb-4">
-                Are you sure you want to remove{" "}
-                <span className="text-game-accent font-medium">
-                  {gearLog[removeConfirmIdx]?.equipment.name}
-                </span>{" "}
-                from {member.name}&apos;s gear log?
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setRemoveConfirmIdx(null)}
-                  className="px-4 py-2 text-sm text-game-text-muted hover:text-game-text border border-game-border rounded transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleRemoveItem}
-                  disabled={saving}
-                  className="px-4 py-2 text-sm font-medium text-white bg-game-danger rounded hover:bg-game-danger-hover disabled:opacity-50 transition-colors cursor-pointer"
-                >
-                  {saving ? "Removing..." : "Remove"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      {/* Remove confirmation dialog */}
+      {removeConfirmIdx !== null && (
+        <Modal isOpen={true} onClose={() => setRemoveConfirmIdx(null)} size="sm">
+          <ModalHeader>Remove Item</ModalHeader>
+          <ModalBody>
+            <p className="text-sm text-game-text-muted">
+              Are you sure you want to remove{" "}
+              <span className="text-game-accent font-medium">
+                {gearLog[removeConfirmIdx]?.equipment.name}
+              </span>{" "}
+              from {member.name}&apos;s gear log?
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="secondary" onClick={() => setRemoveConfirmIdx(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleRemoveItem} disabled={saving}>
+              {saving ? "Removing..." : "Remove"}
+            </Button>
+          </ModalFooter>
+        </Modal>
+      )}
+    </Modal>
   );
 }

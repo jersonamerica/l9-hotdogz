@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useCrudMutation } from "@/hooks/useCrudMutation";
+import { Button } from "@/components/ui";
 
 const fetcher = async <T,>(url: string): Promise<T> => {
   const res = await fetch(url);
@@ -169,10 +170,12 @@ export default function EquipmentPage() {
       <div className="min-h-screen bg-black/60">
         <main className="w-[90%] mx-auto py-8">
           <div className="flex items-center justify-end mb-6">
-            <button
+            <Button
+              size="sm"
+              variant="ghost"
               onClick={() => refetch()}
-              className="p-2 text-game-text-muted hover:text-game-accent transition-colors cursor-pointer disabled:opacity-50"
               title="Refresh"
+              className="p-2"
             >
               <svg
                 className={`w-5 h-5`}
@@ -187,7 +190,7 @@ export default function EquipmentPage() {
                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                 />
               </svg>
-            </button>
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -340,26 +343,30 @@ export default function EquipmentPage() {
                                   <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-game-border">
                                     {editingUserKey === userKey ? (
                                       <>
-                                        <button
+                                        <Button
+                                          variant="secondary"
+                                          size="sm"
                                           onClick={cancelEditing}
-                                          className="px-3 py-1 text-xs font-medium text-game-text-muted hover:text-game-text border border-game-border rounded transition-colors cursor-pointer"
                                         >
                                           Cancel
-                                        </button>
-                                        <button
+                                        </Button>
+                                        <Button
+                                          variant="primary"
+                                          size="sm"
                                           onClick={() =>
                                             saveItems(user._id, user.name)
                                           }
                                           disabled={savingUserKey === user._id}
-                                          className="px-3 py-1 text-xs font-medium text-white bg-game-accent rounded hover:bg-game-accent-hover disabled:opacity-50 transition-colors cursor-pointer"
                                         >
                                           {savingUserKey === user._id
                                             ? "Saving..."
                                             : "Save"}
-                                        </button>
+                                        </Button>
                                       </>
                                     ) : (
-                                      <button
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
                                         onClick={() =>
                                           startEditing(
                                             userKey,
@@ -367,10 +374,10 @@ export default function EquipmentPage() {
                                             user.userEquipmentItems,
                                           )
                                         }
-                                        className="px-3 py-1 text-xs font-medium text-game-accent hover:text-game-accent-hover transition-colors cursor-pointer"
+                                        className="text-game-accent hover:text-game-accent-hover"
                                       >
                                         Edit
-                                      </button>
+                                      </Button>
                                     )}
                                   </div>
                                 )}
