@@ -17,15 +17,47 @@ const fetcher = async <T,>(url: string): Promise<T> => {
   return res.json() as Promise<T>;
 };
 
+interface StatsData {
+  totalMembers: number;
+  totalEquipment: number;
+  avgCp: number;
+  avgProgress: number;
+  leaderboard: Array<{
+    _id: string;
+    name: string;
+    image?: string;
+    cp: number;
+    mastery: string;
+    gearProgress: number;
+  }>;
+  mostNeeded: Array<{
+    _id: string;
+    name: string;
+    type: string;
+    count: number;
+  }>;
+}
+
+interface UserData {
+  _id: string;
+  name: string;
+  email?: string;
+  image?: string;
+  cp: number;
+  mastery: string;
+  role: string;
+  isOnboarded: boolean;
+}
+
 export default function DashboardContent() {
   const { data: session } = useSession();
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<StatsData>({
     queryKey: ["stats"],
-    queryFn: () => fetcher("/api/stats"),
+    queryFn: () => fetcher<StatsData>("/api/stats"),
   });
-  const { data: user } = useQuery({
+  const { data: user } = useQuery<UserData>({
     queryKey: ["user"],
-    queryFn: () => fetcher("/api/user"),
+    queryFn: () => fetcher<UserData>("/api/user"),
   });
 
   const ign = user?.name || null;
