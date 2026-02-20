@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
+import Image from "next/image";
 import LogoutButton from "@/components/LogoutButton";
 import AnnouncementBoard from "@/components/AnnouncementBoard";
 import ActivityLog from "@/components/ActivityLog";
@@ -8,17 +9,14 @@ import WelcomeBanner from "@/components/WelcomeBanner";
 import GuildStats from "@/components/GuildStats";
 import GearLeaderboard from "@/components/GearLeaderboard";
 import StillNeeded from "@/components/StillNeeded";
-import { getStats } from "@/lib/getStats";
-import Image from "next/image";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
-  const stats = await getStats();
 
   return (
     <div
       className="min-h-screen bg-game-dark bg-cover bg-center bg-fixed"
-      style={{ backgroundImage: "url('/bg/members_bg.jpg')" }}
+      style={{ backgroundImage: "url('/bg/dashboard_bg.jpg')" }}
     >
       <div className="min-h-screen bg-black/60 pb-24">
         <nav className="bg-game-nav/80 backdrop-blur-sm border-b border-game-border">
@@ -30,13 +28,12 @@ export default async function Home() {
                 width={80}
                 height={80}
                 className="w-20 h-20"
-                priority
-              />
+              />{" "}
               MC ` HotdogzZ
             </h1>
             <div className="flex items-center gap-4">
               <Link
-                href="/home"
+                href="/dashboard"
                 className="text-game-accent font-medium text-sm"
               >
                 Dashboard
@@ -68,24 +65,12 @@ export default async function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left column: Banner, Stats, Announcements, Leaderboard + Needed */}
             <div className="lg:col-span-2 space-y-6">
-              <WelcomeBanner
-                userName={session?.user?.name}
-                totalMembers={stats.totalMembers}
-                avgProgress={stats.avgProgress}
-              />
+              <WelcomeBanner userName={session?.user?.name} />
               <AnnouncementBoard />
-              <GuildStats
-                totalMembers={stats.totalMembers}
-                totalEquipment={stats.totalEquipment}
-                avgCp={stats.avgCp}
-                avgProgress={stats.avgProgress}
-              />
+              <GuildStats />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <GearLeaderboard leaderboard={stats.leaderboard} />
-                <StillNeeded
-                  items={stats.mostNeeded}
-                  totalMembers={stats.totalMembers}
-                />
+                <GearLeaderboard />
+                <StillNeeded />
               </div>
             </div>
 

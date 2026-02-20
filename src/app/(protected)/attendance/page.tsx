@@ -245,7 +245,7 @@ export default function AttendancePage() {
       className="min-h-screen bg-cover bg-center bg-fixed"
       style={{ backgroundImage: "url(/bg/attendance_bg.jpg)" }}
     >
-      <div className="min-h-screen bg-black/60">
+      <div className="min-h-screen bg-black/60 pb-24">
         <main className="w-[90%] mx-auto py-8 flex gap-6">
           {/* Left Sidebar - Members Attendance Points */}
           <div className="hidden lg:block w-1/4">
@@ -296,9 +296,7 @@ export default function AttendancePage() {
                 Attendance Events
               </h2>
               {isAdmin && (
-                <Button onClick={openCreateModal}>
-                  + Add Event
-                </Button>
+                <Button onClick={openCreateModal}>+ Add Event</Button>
               )}
             </div>
 

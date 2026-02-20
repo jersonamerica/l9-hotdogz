@@ -390,13 +390,15 @@ export default function ProfileEditor() {
       <div className="space-y-6">
         {/* Image and Mastery Name - Top */}
         <div className="flex flex-col items-center gap-3">
-          <img
+          <Image
             src={
               mastery
                 ? MASTERY_IMAGES[mastery] || "/weapon/battle_shield.png"
                 : "/weapon/battle_shield.png"
             }
             alt={mastery || "Weapon"}
+            width={400}
+            height={400}
             className="w-full max-w-xs object-contain drop-shadow-lg"
           />
           {mastery && (
@@ -506,9 +508,11 @@ export default function ProfileEditor() {
                         }}
                         className="w-full text-left px-3 py-2 text-sm text-game-text hover:bg-game-card-hover transition-colors flex items-center gap-2"
                       >
-                        <img
+                        <Image
                           src={MASTERY_IMAGES[option]}
                           alt={option}
+                          width={24}
+                          height={24}
                           className="w-6 h-6 object-contain"
                         />
                         <span>{option}</span>
@@ -574,6 +578,22 @@ export default function ProfileEditor() {
               </label>
             ))}
           </div>
+        </div>
+
+        {/* Weapon Section */}
+        <div>
+          <label className="block text-sm font-medium text-game-text-muted mb-2">
+            Weapon
+          </label>
+          <label className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors w-fit">
+            <input
+              type="checkbox"
+              checked={userEquipmentItems.includes("Weapon")}
+              onChange={() => toggleEquipmentItem("Weapon")}
+              className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
+            />
+            <span className="text-sm text-game-text">Weapon</span>
+          </label>
         </div>
 
         {/* Abilities Section */}

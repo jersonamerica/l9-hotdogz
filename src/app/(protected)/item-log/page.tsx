@@ -11,7 +11,7 @@ export default async function DashboardPage() {
       className="min-h-screen bg-cover bg-center bg-fixed"
       style={{ backgroundImage: "url('/bg/equipment_bg.jpg')" }}
     >
-      <div className="min-h-screen bg-black/60">
+      <div className="min-h-screen bg-black/60 pb-24">
         <main className="w-[90%] mx-auto py-8">
           <h2 className="text-2xl font-bold text-game-text mb-6 flex items-center gap-2">
             <Image

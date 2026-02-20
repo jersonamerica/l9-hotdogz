@@ -8,6 +8,7 @@ import GearLeaderboard from "./GearLeaderboard";
 import StillNeeded from "./StillNeeded";
 import AnnouncementBoard from "./AnnouncementBoard";
 import ActivityLog from "./ActivityLog";
+import MostActiveMembers from "./MostActiveMembers";
 
 const fetcher = async <T,>(url: string): Promise<T> => {
   const res = await fetch(url);
@@ -89,8 +90,9 @@ export default function DashboardContent() {
       </div>
 
       {/* Right column */}
-      <div className="lg:col-span-1">
+      <div className="lg:col-span-1 space-y-6">
         <ActivityLog />
+        <MostActiveMembers />
       </div>
     </div>
   );
