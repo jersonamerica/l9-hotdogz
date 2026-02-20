@@ -42,7 +42,6 @@ interface EquipmentItem {
 interface UserProfile {
   _id: string;
   name: string;
-  email: string;
   image?: string;
   cp: number;
   mastery: string;

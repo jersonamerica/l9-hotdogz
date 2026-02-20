@@ -14,7 +14,6 @@ interface CustomToken extends JWT {
 interface CustomSession extends Session {
   user?: {
     name?: string | null;
-    email?: string | null;
     image?: string | null;
     id?: string;
     role?: string;
@@ -36,13 +35,13 @@ export const authOptions: NextAuthOptions = {
       try {
         await connectDB();
 
-        // Check if user exists
-        let dbUser = await User.findOne({ email: user.email });
+        // Check if user exists by providerId
+        let dbUser = await User.findOne({ providerId: account.providerAccountId });
 
         if (!dbUser) {
           // Create new user
           dbUser = await User.create({
-            email: user.email!,
+            providerId: account.providerAccountId,
             name: user.name,
             image: user.image,
             googleId: account.providerAccountId,
@@ -53,7 +52,7 @@ export const authOptions: NextAuthOptions = {
       } catch (error) {
         console.error("=== SIGN IN ERROR ===");
         console.error("Error during sign in:", error);
-        console.error("User email:", user.email);
+        console.error("Provider ID:", account.providerAccountId);
         console.error("=== END SIGN IN ERROR ===");
         return false;
       }
@@ -66,7 +65,7 @@ export const authOptions: NextAuthOptions = {
       if (account || trigger === "update" || !customToken.id) {
         try {
           await connectDB();
-          const dbUser = await User.findOne({ email: token.email });
+          const dbUser = await User.findOne({ providerId: token.sub });
           if (dbUser) {
             customToken.id = dbUser._id.toString();
             customToken.role = dbUser.role;

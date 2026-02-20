@@ -42,7 +42,6 @@ interface StatsData {
 interface UserData {
   _id: string;
   name: string;
-  email?: string;
   image?: string;
   cp: number;
   mastery: string;
