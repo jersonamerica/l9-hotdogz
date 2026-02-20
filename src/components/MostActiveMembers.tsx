@@ -36,7 +36,9 @@ export default function MostActiveMembers() {
         <h3 className="text-sm font-bold text-game-accent">
           Most Active Members
         </h3>
-        <p className="text-xs text-game-text-muted mt-1">Top 10 by attendance</p>
+        <p className="text-xs text-game-text-muted mt-1">
+          Top 10 by attendance
+        </p>
       </div>
 
       <div className="divide-y divide-game-border">
