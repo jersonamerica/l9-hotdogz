@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MASTERY_OPTIONS, MASTERY_IMAGES } from "@/lib/constants";
+import { MASTERY_OPTIONS, MASTERY_IMAGES, ACCESSORIES } from "@/lib/constants";
 import { ABILITIES } from "@/lib/abilities";
 import { MOUNTS } from "@/lib/mounts";
 import Image from "next/image";
@@ -47,6 +47,7 @@ interface UserProfile {
   mastery: string;
   equipmentType: string;
   userEquipmentItems: string[];
+  userEquipmentAccessories: string[];
   userAbilities: string[];
   userMounts: string[];
   gearLog: GearLogEntry[];
@@ -59,6 +60,7 @@ interface UpdateProfilePayload {
   mastery?: string;
   equipmentType?: string;
   userEquipmentItems?: string[];
+  userEquipmentAccessories?: string[];
   userAbilities?: string[];
   userMounts?: string[];
   gearLog?: GearLogPayload[];
@@ -98,6 +100,9 @@ export default function ProfileEditor() {
   const [mastery, setMastery] = useState("");
   const [equipmentType, setEquipmentType] = useState("Plate");
   const [userEquipmentItems, setUserEquipmentItems] = useState<string[]>([]);
+  const [userEquipmentAccessories, setUserEquipmentAccessories] = useState<
+    string[]
+  >([]);
   const [userAbilities, setUserAbilities] = useState<string[]>([]);
   const [userMounts, setUserMounts] = useState<string[]>([]);
   const [gearLog, setGearLog] = useState<GearLogEntry[]>([]);
@@ -154,6 +159,7 @@ export default function ProfileEditor() {
       setMasterySearch(profileData.mastery || "");
       setEquipmentType(profileData.equipmentType || "Plate");
       setUserEquipmentItems(profileData.userEquipmentItems || []);
+      setUserEquipmentAccessories(profileData.userEquipmentAccessories || []);
       setUserAbilities(profileData.userAbilities || []);
       setUserMounts(profileData.userMounts || []);
       setGearLog(profileData.gearLog || []);
@@ -195,6 +201,7 @@ export default function ProfileEditor() {
         mastery,
         equipmentType,
         userEquipmentItems,
+        userEquipmentAccessories,
         userAbilities,
         userMounts,
         gearLog: gearLogPayload,
@@ -236,6 +243,14 @@ export default function ProfileEditor() {
   const toggleEquipmentItem = (item: string) => {
     setUserEquipmentItems((prev) =>
       prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item],
+    );
+  };
+
+  const toggleAccessory = (accessory: string) => {
+    setUserEquipmentAccessories((prev) =>
+      prev.includes(accessory)
+        ? prev.filter((item) => item !== accessory)
+        : [...prev, accessory],
     );
   };
 
@@ -557,87 +572,106 @@ export default function ProfileEditor() {
         </div>
 
         {/* Owned Legendary Equipment Section */}
-        <div>
-          <label className="block text-sm font-medium text-game-text-muted mb-2">
-            Owned Legendary Equipment ({equipmentType})
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {EQUIPMENT_ITEMS[equipmentType]?.map((item) => (
-              <label
-                key={item}
-                className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
-              >
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div>
+            <h2 className="text-1xl font-bold text-game-accent mb-4 text-center">
+              Legendary Equipment ({equipmentType})
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {EQUIPMENT_ITEMS[equipmentType]?.map((item) => (
+                <label
+                  key={item}
+                  className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={userEquipmentItems.includes(item)}
+                    onChange={() => toggleEquipmentItem(item)}
+                    className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
+                  />
+                  <span className="text-sm text-game-text">{item}</span>
+                </label>
+              ))}
+              <label className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors">
                 <input
                   type="checkbox"
-                  checked={userEquipmentItems.includes(item)}
-                  onChange={() => toggleEquipmentItem(item)}
+                  checked={userEquipmentItems.includes("Weapon")}
+                  onChange={() => toggleEquipmentItem("Weapon")}
                   className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
                 />
-                <span className="text-sm text-game-text">{item}</span>
+                <span className="text-sm text-game-text">Weapon</span>
               </label>
-            ))}
+            </div>
+          </div>
+          {/* Accessories Section */}
+          <div>
+            <h2 className="text-1xl font-bold text-game-accent mb-4 text-center">
+              Accessories
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {ACCESSORIES.map((accessory) => (
+                <label
+                  key={accessory}
+                  className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={userEquipmentAccessories.includes(accessory)}
+                    onChange={() => toggleAccessory(accessory)}
+                    className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
+                  />
+                  <span className="text-sm text-game-text">{accessory}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Weapon Section */}
-        <div>
-          <label className="block text-sm font-medium text-game-text-muted mb-2">
-            Weapon
-          </label>
-          <label className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors w-fit">
-            <input
-              type="checkbox"
-              checked={userEquipmentItems.includes("Weapon")}
-              onChange={() => toggleEquipmentItem("Weapon")}
-              className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
-            />
-            <span className="text-sm text-game-text">Weapon</span>
-          </label>
-        </div>
-
-        {/* Abilities Section */}
-        <div>
-          <label className="block text-sm font-medium text-game-text-muted mb-2">
-            Abilities
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {ABILITIES.map((ability) => (
-              <label
-                key={ability}
-                className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  checked={userAbilities.includes(ability)}
-                  onChange={() => toggleAbility(ability)}
-                  className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
-                />
-                <span className="text-sm text-game-text">{ability}</span>
-              </label>
-            ))}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {/* Abilities Section */}
+          <div>
+            <h2 className="text-1xl font-bold text-game-accent mb-4 text-center">
+              Abilities
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {ABILITIES.map((ability) => (
+                <label
+                  key={ability}
+                  className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={userAbilities.includes(ability)}
+                    onChange={() => toggleAbility(ability)}
+                    className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
+                  />
+                  <span className="text-sm text-game-text">{ability}</span>
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Mounts Section */}
-        <div>
-          <label className="block text-sm font-medium text-game-text-muted mb-2">
-            Mounts
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {MOUNTS.map((mount) => (
-              <label
-                key={mount}
-                className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  checked={userMounts.includes(mount)}
-                  onChange={() => toggleMount(mount)}
-                  className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
-                />
-                <span className="text-sm text-game-text">{mount}</span>
-              </label>
-            ))}
+          {/* Mounts Section */}
+          <div>
+            <h2 className="text-1xl font-bold text-game-accent mb-4 text-center">
+              Mounts
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {MOUNTS.map((mount) => (
+                <label
+                  key={mount}
+                  className="flex items-center gap-2 p-2 rounded border border-game-border hover:bg-game-card-hover/30 cursor-pointer transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={userMounts.includes(mount)}
+                    onChange={() => toggleMount(mount)}
+                    className="w-4 h-4 rounded border-game-border bg-game-darker accent-game-accent"
+                  />
+                  <span className="text-sm text-game-text">{mount}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 

@@ -24,8 +24,8 @@ interface CustomSession extends Session {
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
   callbacks: {
@@ -36,7 +36,9 @@ export const authOptions: NextAuthOptions = {
         await connectDB();
 
         // Check if user exists by providerId
-        let dbUser = await User.findOne({ providerId: account.providerAccountId });
+        let dbUser = await User.findOne({
+          providerId: account.providerAccountId,
+        });
 
         if (!dbUser) {
           // Create new user

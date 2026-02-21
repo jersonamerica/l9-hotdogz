@@ -68,6 +68,8 @@ export default function EquipmentList({
   const [selectedEquipment, setSelectedEquipment] =
     useState<EquipmentItem | null>(null);
   const [showGearModal, setShowGearModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<EquipmentItem | null>(null);
 
   const deleteEquipmentMutation = useCrudMutation<{ id: string }, unknown>({
     method: "DELETE",
@@ -75,17 +77,29 @@ export default function EquipmentList({
     invalidateKeys: [["equipment"], ["members"], ["stats"], ["activity"]],
   });
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this equipment?")) return;
+  const handleDelete = (item: EquipmentItem) => {
+    setItemToDelete(item);
+    setShowDeleteDialog(true);
+  };
 
-    setDeletingId(id);
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+
+    setDeletingId(itemToDelete._id);
     try {
-      await deleteEquipmentMutation.mutateAsync({ id });
+      await deleteEquipmentMutation.mutateAsync({ id: itemToDelete._id });
+      setShowDeleteDialog(false);
+      setItemToDelete(null);
     } catch (error) {
       console.error("Failed to delete equipment:", error);
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteDialog(false);
+    setItemToDelete(null);
   };
 
   const doMutations = () => {
@@ -122,13 +136,15 @@ export default function EquipmentList({
     }
   };
 
-  const filteredEquipment = equipment.filter((item) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return (
-      item.name.toLowerCase().includes(q) || item.type.toLowerCase().includes(q)
-    );
-  });
+  const filteredEquipment = equipment
+    .filter((item) => {
+      if (!search.trim()) return true;
+      const q = search.toLowerCase();
+      return (
+        item.name.toLowerCase().includes(q) || item.type.toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const typeColors: Record<string, string> = {
     gear: "bg-game-gear/20 text-game-gear border border-game-gear/30",
@@ -159,7 +175,7 @@ export default function EquipmentList({
         </h3>
         {isAdmin && (
           <div className="flex items-center gap-2">
-            <Button onClick={() => setShowForm(true)}>
+            <Button onClick={() => setShowForm(true)} className="cursor-pointer">
               <svg
                 className="w-4 h-4"
                 fill="none"
@@ -194,7 +210,7 @@ export default function EquipmentList({
           onClick={handleRefresh}
           disabled={refreshing}
           title="Refresh"
-          className="p-2"
+          className="p-2 cursor-pointer"
         >
           <svg
             className={`w-5 h-5 ${refreshing ? "animate-spin" : ""}`}
@@ -292,7 +308,7 @@ export default function EquipmentList({
                               e.stopPropagation();
                               handleEdit(item);
                             }}
-                            className="mr-4 text-game-accent hover:text-game-accent-hover"
+                            className="mr-4 text-game-accent hover:text-game-accent-hover cursor-pointer"
                           >
                             Edit
                           </Button>
@@ -301,10 +317,10 @@ export default function EquipmentList({
                             variant="ghost"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDelete(item._id);
+                              handleDelete(item);
                             }}
                             disabled={deletingId === item._id}
-                            className="text-game-danger hover:text-game-danger-hover"
+                            className="text-game-danger hover:text-game-danger-hover cursor-pointer"
                           >
                             {deletingId === item._id ? "Deleting..." : "Delete"}
                           </Button>
@@ -338,7 +354,7 @@ export default function EquipmentList({
                                       setSelectedEquipment(item);
                                       setShowGearModal(true);
                                     }}
-                                    className="flex items-center gap-2 bg-game-card/50 border border-game-border hover:border-game-accent justify-between w-full"
+                                    className="flex items-center gap-2 bg-game-card/50 border border-game-border hover:border-game-accent justify-between w-full cursor-pointer"
                                   >
                                     <span className="text-xs text-game-text truncate">
                                       {m.name || "Unknown"}
@@ -382,6 +398,67 @@ export default function EquipmentList({
             setSelectedEquipment(null);
           }}
         />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && itemToDelete && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-game-card border border-game-border rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-game-danger/20 flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-game-danger"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-game-text">
+                    Delete Equipment
+                  </h3>
+                  <p className="text-sm text-game-text-muted mt-1">
+                    This action cannot be undone
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-sm text-game-text mb-6">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-game-accent">
+                  {itemToDelete.name}
+                </span>
+                ? This will remove it from all members&apos; gear logs.
+              </p>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="ghost"
+                  onClick={cancelDelete}
+                  disabled={deletingId === itemToDelete._id}
+                  className="border border-game-border hover:bg-game-card-hover cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmDelete}
+                  disabled={deletingId === itemToDelete._id}
+                  className="bg-game-danger hover:bg-game-danger/90 text-white border-0 cursor-pointer"
+                >
+                  {deletingId === itemToDelete._id ? "Deleting..." : "Delete"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

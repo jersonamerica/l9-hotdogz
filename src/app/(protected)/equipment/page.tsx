@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useCrudMutation } from "@/hooks/useCrudMutation";
 import { Button } from "@/components/ui";
-import { MASTERY_OPTIONS, MASTERY_IMAGES } from "@/lib/constants";
+import { MASTERY_OPTIONS, MASTERY_IMAGES, ACCESSORIES } from "@/lib/constants";
 
 const fetcher = async <T,>(url: string): Promise<T> => {
   const res = await fetch(url);
@@ -23,6 +23,7 @@ interface User {
   mastery: string;
   equipmentType: "Plate" | "Leather" | "Cloth";
   userEquipmentItems: string[];
+  userEquipmentAccessories: string[];
 }
 
 const EQUIPMENT_ITEMS: Record<string, string[]> = {
@@ -55,7 +56,11 @@ export default function EquipmentPage() {
   const [successMessage, setSuccessMessage] = useState("");
 
   const updateEquipmentMutation = useCrudMutation<
-    { userId: string; userEquipmentItems: string[] },
+    {
+      userId: string;
+      userEquipmentItems?: string[];
+      userEquipmentAccessories?: string[];
+    },
     unknown
   >({
     method: "PUT",
@@ -110,10 +115,14 @@ export default function EquipmentPage() {
     try {
       const newItems = editingItems[userId] || [];
 
-      await updateEquipmentMutation.mutateAsync({
-        userId,
-        userEquipmentItems: newItems,
-      });
+      // Determine if we're editing accessories or equipment items
+      const isAccessories = editingUserKey?.startsWith("accessories-");
+
+      const updatePayload = isAccessories
+        ? { userId, userEquipmentAccessories: newItems }
+        : { userId, userEquipmentItems: newItems };
+
+      await updateEquipmentMutation.mutateAsync(updatePayload);
 
       // Update local state immediately
       setSavedItems((prev) => ({
@@ -125,7 +134,8 @@ export default function EquipmentPage() {
       setEditingItems({});
 
       // Show success dialog
-      setSuccessMessage(`${userName}'s equipment updated successfully!`);
+      const itemType = isAccessories ? "accessories" : "equipment";
+      setSuccessMessage(`${userName}'s ${itemType} updated successfully!`);
       setShowSuccessDialog(true);
 
       // Auto-close dialog after 2 seconds
@@ -133,7 +143,7 @@ export default function EquipmentPage() {
         setShowSuccessDialog(false);
       }, 2000);
     } catch (error) {
-      console.error("Failed to update equipment items:", error);
+      console.error("Failed to update items:", error);
     } finally {
       setSavingUserKey(null);
     }
@@ -298,7 +308,7 @@ export default function EquipmentPage() {
                                         : "text-red-400"
                                     }`}
                                   >
-                                    {hasWeapon ? "✓ Have" : "✗ Not"}
+                                    {hasWeapon ? "✓" : "✗"}
                                   </span>
                                   {isAdmin && (
                                     <Button
@@ -334,43 +344,78 @@ export default function EquipmentPage() {
             <h2 className="text-2xl font-bold text-game-accent mb-8">
               Equipment Type
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 {
                   name: "Plate",
                   image: "/image/plate-armor.png",
                   color: "bg-blue-500/20 border-blue-500/30",
                   textColor: "text-blue-400",
+                  items: EQUIPMENT_ITEMS["Plate"],
+                  dataField: "userEquipmentItems" as const,
                 },
                 {
                   name: "Leather",
                   image: "/image/leather-armor.png",
                   color: "bg-amber-500/20 border-amber-500/30",
                   textColor: "text-amber-400",
+                  items: EQUIPMENT_ITEMS["Leather"],
+                  dataField: "userEquipmentItems" as const,
                 },
                 {
                   name: "Cloth",
                   image: "/image/cloth-armor.png",
                   color: "bg-black-500/20 border-black-500/30",
                   textColor: "text-purple-400",
+                  items: EQUIPMENT_ITEMS["Cloth"],
+                  dataField: "userEquipmentItems" as const,
+                },
+                {
+                  name: "Accessories",
+                  image: "/image/accessory.png",
+                  color: "bg-game-accent/20 border-game-accent/30",
+                  textColor: "text-game-accent",
+                  items: ACCESSORIES,
+                  dataField: "userEquipmentAccessories" as const,
                 },
               ].map((category) => {
-                const categoryUsers = getUsersByType(category.name);
+                const categoryUsers =
+                  category.name === "Accessories"
+                    ? membersData.sort((a, b) => b.cp - a.cp)
+                    : getUsersByType(category.name);
 
                 return (
                   <div
                     key={category.name}
                     className={`bg-game-card/80 backdrop-blur-sm border ${category.color} rounded-xl p-6`}
                   >
-                    {/* Image at top center */}
+                    {/* Image/Icon at top center */}
                     <div className="flex justify-center mb-4 h-32">
-                      <Image
-                        src={category.image}
-                        alt={category.name}
-                        width={120}
-                        height={120}
-                        className="object-contain"
-                      />
+                      {category.image ? (
+                        <Image
+                          src={category.image}
+                          alt={category.name}
+                          width={120}
+                          height={120}
+                          className="object-contain"
+                        />
+                      ) : (
+                        <div className="w-32 h-32 flex items-center justify-center">
+                          <svg
+                            className="w-24 h-24 text-game-accent"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
+                            />
+                          </svg>
+                        </div>
+                      )}
                     </div>
 
                     <div className="text-center mb-6">
@@ -387,34 +432,41 @@ export default function EquipmentPage() {
                     <div className="space-y-2">
                       {categoryUsers.length === 0 ? (
                         <p className="text-xs text-game-text-muted text-center py-4 italic">
-                          No members with this equipment type
+                          {category.name === "Accessories"
+                            ? "No members found"
+                            : "No members with this equipment type"}
                         </p>
                       ) : (
                         categoryUsers.map((user) => {
                           const userKey = `${category.name}-${user._id}`;
                           const isExpanded = expandedUsers[userKey] || false;
-                          const equipmentItems =
-                            EQUIPMENT_ITEMS[category.name] || [];
+                          const equipmentItems = category.items || [];
 
                           const currentItems =
                             savedItems[user._id] !== undefined
                               ? savedItems[user._id]
-                              : user.userEquipmentItems;
+                              : category.dataField ===
+                                  "userEquipmentAccessories"
+                                ? user.userEquipmentAccessories || []
+                                : user.userEquipmentItems;
 
-                          // Exclude Weapon from completion percentage calculation
-                          const equipmentItemsWithoutWeapon =
-                            equipmentItems.filter(
-                              (item) => item !== "Weapon",
-                            );
-                          const currentItemsWithoutWeapon = currentItems.filter(
-                            (item) => item !== "Weapon",
-                          );
+                          // Exclude Weapon from completion percentage calculation for equipment items
+                          const itemsForCalculation =
+                            category.dataField === "userEquipmentItems"
+                              ? equipmentItems.filter(
+                                  (item) => item !== "Weapon",
+                                )
+                              : equipmentItems;
+                          const currentItemsForCalculation =
+                            category.dataField === "userEquipmentItems"
+                              ? currentItems.filter((item) => item !== "Weapon")
+                              : currentItems;
 
                           const completionPercentage =
-                            equipmentItemsWithoutWeapon.length > 0
+                            itemsForCalculation.length > 0
                               ? Math.round(
-                                  (currentItemsWithoutWeapon.length /
-                                    equipmentItemsWithoutWeapon.length) *
+                                  (currentItemsForCalculation.length /
+                                    itemsForCalculation.length) *
                                     100,
                                 )
                               : 0;
@@ -471,10 +523,17 @@ export default function EquipmentPage() {
                               {isExpanded && (
                                 <div className="px-4 py-3 bg-game-darker/30 border-t border-game-border space-y-2">
                                   <p className="text-xs font-medium text-game-text-muted uppercase tracking-wider mb-3">
-                                    Equipment Items
+                                    {category.name === "Accessories"
+                                      ? "Accessories"
+                                      : "Equipment Items"}
                                   </p>
                                   {equipmentItems
-                                    .filter((item) => item !== "Weapon")
+                                    .filter((item) =>
+                                      category.dataField ===
+                                      "userEquipmentItems"
+                                        ? item !== "Weapon"
+                                        : true,
+                                    )
                                     .map((item) => {
                                       const isEditing =
                                         editingUserKey === userKey;
@@ -483,9 +542,15 @@ export default function EquipmentPage() {
                                         ? editingItems[user._id]?.includes(item)
                                         : savedItems[user._id] !== undefined
                                           ? savedItems[user._id].includes(item)
-                                          : user.userEquipmentItems.includes(
-                                              item,
-                                            );
+                                          : category.dataField ===
+                                              "userEquipmentAccessories"
+                                            ? (
+                                                user.userEquipmentAccessories ||
+                                                []
+                                              ).includes(item)
+                                            : user.userEquipmentItems.includes(
+                                                item,
+                                              );
                                       return (
                                         <div
                                           key={item}
@@ -548,7 +613,11 @@ export default function EquipmentPage() {
                                             startEditing(
                                               userKey,
                                               user._id,
-                                              user.userEquipmentItems,
+                                              category.dataField ===
+                                                "userEquipmentAccessories"
+                                                ? user.userEquipmentAccessories ||
+                                                    []
+                                                : user.userEquipmentItems,
                                             )
                                           }
                                           className="text-game-accent hover:text-game-accent-hover"

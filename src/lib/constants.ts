@@ -22,3 +22,14 @@ export const MASTERY_IMAGES: Record<string, string> = {
   Greatsword: "/weapon/greatsword.png",
   "Dual Dagger": "/weapon/dual_dagger.png",
 };
+
+// Accessories - shared across all equipment types
+export const ACCESSORIES = [
+  "Bracelet",
+  "Ring",
+  "Necklace",
+  "Earring",
+  "Belt",
+] as const;
+
+export type AccessoryType = (typeof ACCESSORIES)[number];

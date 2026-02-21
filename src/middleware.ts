@@ -7,7 +7,6 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token }) => {
-        console.log("Authorized callback - token exists:", !!token);
         // Only allow if token exists (user is authenticated)
         return !!token;
       },
@@ -22,6 +21,7 @@ export const config = {
   matcher: [
     "/",
     "/dashboard",
+    "/equipment",
     "/item-log",
     "/profile",
     "/onboarding",

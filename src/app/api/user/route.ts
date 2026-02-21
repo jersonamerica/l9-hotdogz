@@ -17,7 +17,7 @@ export async function GET() {
     await connectDB();
     const user = await User.findById(session.user.id)
       .select(
-        "name image cp mastery equipmentType userEquipmentItems userAbilities userMounts gearLog role isOnboarded",
+        "name image cp mastery equipmentType userEquipmentItems userEquipmentAccessories userAbilities userMounts gearLog role isOnboarded",
       )
       .populate("gearLog.equipment", "name type")
       .lean();
@@ -67,7 +67,7 @@ export async function PUT(req: NextRequest) {
     // Fetch the current user before updating
     const currentUser = await User.findById(targetUserId)
       .select(
-        "name image cp mastery equipmentType userEquipmentItems userAbilities userMounts gearLog role",
+        "name image cp mastery equipmentType userEquipmentItems userEquipmentAccessories userAbilities userMounts gearLog role",
       )
       .populate("gearLog.equipment", "name type")
       .lean();
@@ -84,6 +84,8 @@ export async function PUT(req: NextRequest) {
       updateData.equipmentType = body.equipmentType;
     if (body.userEquipmentItems !== undefined)
       updateData.userEquipmentItems = body.userEquipmentItems;
+    if (body.userEquipmentAccessories !== undefined)
+      updateData.userEquipmentAccessories = body.userEquipmentAccessories;
     if (body.userAbilities !== undefined)
       updateData.userAbilities = body.userAbilities;
     if (body.userMounts !== undefined) updateData.userMounts = body.userMounts;
@@ -106,7 +108,7 @@ export async function PUT(req: NextRequest) {
       { new: true, runValidators: true },
     )
       .select(
-        "name image cp mastery equipmentType userEquipmentItems userAbilities userMounts gearLog role",
+        "name image cp mastery equipmentType userEquipmentItems userEquipmentAccessories userAbilities userMounts gearLog role",
       )
       .populate("gearLog.equipment", "name type")
       .lean();

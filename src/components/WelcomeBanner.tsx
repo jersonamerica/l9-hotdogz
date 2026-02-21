@@ -7,8 +7,8 @@ interface Props {
   avgProgress: number;
 }
 
-export default function WelcomeBanner({ userName, ign, avgProgress }: Props) {
-  const displayName = ign || userName;
+export default function WelcomeBanner({ ign, avgProgress }: Props) {
+  const displayName = ign || "";
 
   return (
     <div className="relative bg-game-card/80 backdrop-blur-sm border border-game-border rounded-xl p-6 overflow-hidden">
@@ -25,9 +25,12 @@ export default function WelcomeBanner({ userName, ign, avgProgress }: Props) {
               height={38}
               className="inline-block align-middle"
             />
-            Welcome back,
+
             {displayName ? (
-              <span className="text-game-accent">{displayName}!</span>
+              <>
+                Welcome back,
+                <span className="text-game-accent">{displayName}!</span>
+              </>
             ) : null}
           </h2>
         </div>

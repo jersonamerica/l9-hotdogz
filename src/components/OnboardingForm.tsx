@@ -47,8 +47,6 @@ export default function OnboardingForm() {
     }
   };
 
-  const selectedImage = mastery ? MASTERY_IMAGES[mastery] : null;
-
   return (
     <div className="min-h-screen bg-game-dark flex items-center justify-center">
       <div className="w-full max-w-2xl mx-auto px-4">

@@ -39,6 +39,10 @@ const userSchema = new Schema(
         default: "",
       },
     ],
+    userEquipmentAccessories: {
+      type: [String],
+      default: [],
+    },
     userAbilities: {
       type: [String],
       default: [],
