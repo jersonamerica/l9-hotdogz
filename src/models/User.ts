@@ -15,11 +15,6 @@ const userSchema = new Schema(
       type: String,
       required: false,
     },
-    googleId: {
-      type: String,
-      required: true,
-      unique: true,
-    },
     role: {
       type: String,
       enum: ["member", "admin"],

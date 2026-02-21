@@ -44,7 +44,6 @@ export const authOptions: NextAuthOptions = {
             providerId: account.providerAccountId,
             name: user.name,
             image: user.image,
-            googleId: account.providerAccountId,
           });
         }
 
