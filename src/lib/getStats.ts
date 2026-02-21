@@ -79,6 +79,9 @@ export async function getStats(): Promise<StatsData> {
   > = {};
   for (const m of memberStats) {
     for (const item of m.neededItems) {
+      if (item.type.toLowerCase() !== "gear") {
+        continue;
+      }
       const id = item._id;
       if (!itemNeedCount[id]) {
         itemNeedCount[id] = {

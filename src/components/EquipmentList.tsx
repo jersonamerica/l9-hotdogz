@@ -141,7 +141,8 @@ export default function EquipmentList({
       if (!search.trim()) return true;
       const q = search.toLowerCase();
       return (
-        item.name.toLowerCase().includes(q) || item.type.toLowerCase().includes(q)
+        item.name.toLowerCase().includes(q) ||
+        item.type.toLowerCase().includes(q)
       );
     })
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -175,7 +176,10 @@ export default function EquipmentList({
         </h3>
         {isAdmin && (
           <div className="flex items-center gap-2">
-            <Button onClick={() => setShowForm(true)} className="cursor-pointer">
+            <Button
+              onClick={() => setShowForm(true)}
+              className="cursor-pointer"
+            >
               <svg
                 className="w-4 h-4"
                 fill="none"

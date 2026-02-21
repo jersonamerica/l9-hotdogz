@@ -73,6 +73,88 @@ const ACTION_CONFIG: Record<
     label: "Gear Completed",
     color: "text-green-400",
   },
+  // User profile updates
+  name_updated: {
+    icon: "📝",
+    label: "Name Updated",
+    color: "text-sky-400",
+  },
+  cp_updated: {
+    icon: "⚡",
+    label: "CP Updated",
+    color: "text-sky-400",
+  },
+  mastery_updated: {
+    icon: "🎯",
+    label: "Mastery Updated",
+    color: "text-sky-400",
+  },
+  equipment_type_updated: {
+    icon: "🛡️",
+    label: "Equipment Type Updated",
+    color: "text-sky-400",
+  },
+  // Legendary equipment
+  legendary_equipment_added: {
+    icon: "➕",
+    label: "Legendary Equipment Added",
+    color: "text-blue-400",
+  },
+  legendary_equipment_removed: {
+    icon: "➖",
+    label: "Legendary Equipment Removed",
+    color: "text-red-400",
+  },
+  // Accessories
+  accessory_added: {
+    icon: "➕",
+    label: "Accessory Added",
+    color: "text-blue-400",
+  },
+  accessory_removed: {
+    icon: "➖",
+    label: "Accessory Removed",
+    color: "text-red-400",
+  },
+  // Abilities
+  ability_added: {
+    icon: "➕",
+    label: "Ability Added",
+    color: "text-blue-400",
+  },
+  ability_removed: {
+    icon: "➖",
+    label: "Ability Removed",
+    color: "text-red-400",
+  },
+  // Mounts
+  mount_added: {
+    icon: "➕",
+    label: "Mount Added",
+    color: "text-blue-400",
+  },
+  mount_removed: {
+    icon: "➖",
+    label: "Mount Removed",
+    color: "text-red-400",
+  },
+  // Item log
+  item_log_added: {
+    icon: "➕",
+    label: "Item Log Added",
+    color: "text-blue-400",
+  },
+  item_log_removed: {
+    icon: "➖",
+    label: "Item Log Removed",
+    color: "text-red-400",
+  },
+  // Admin actions
+  admin_updated_user: {
+    icon: "👤",
+    label: "Admin Updated User",
+    color: "text-purple-400",
+  },
 };
 
 function timeAgo(dateStr: string): string {
