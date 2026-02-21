@@ -145,7 +145,16 @@ export default function EquipmentList({
         item.type.toLowerCase().includes(q)
       );
     })
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => {
+      const aIsGear = a.type.toLowerCase() === "gear";
+      const bIsGear = b.type.toLowerCase() === "gear";
+
+      if (aIsGear !== bIsGear) {
+        return aIsGear ? -1 : 1;
+      }
+
+      return a.name.localeCompare(b.name);
+    });
 
   const typeColors: Record<string, string> = {
     gear: "bg-game-gear/20 text-game-gear border border-game-gear/30",
