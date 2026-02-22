@@ -9,6 +9,7 @@ import StillNeeded from "./StillNeeded";
 import AnnouncementBoard from "./AnnouncementBoard";
 import ActivityLog from "./ActivityLog";
 import MostActiveMembers from "./MostActiveMembers";
+import WeaponGrantsCard from "./WeaponGrantsCard";
 
 const fetcher = async <T,>(url: string): Promise<T> => {
   const res = await fetch(url);
@@ -36,6 +37,14 @@ interface StatsData {
     name: string;
     type: string;
     count: number;
+  }>;
+  weaponGrants: Array<{
+    _id: string;
+    userId: string;
+    userName: string;
+    weapon: string;
+    grantedByName: string;
+    grantedAt: string;
   }>;
 }
 
@@ -91,6 +100,7 @@ export default function DashboardContent() {
       {/* Right column */}
       <div className="lg:col-span-1 space-y-6">
         <ActivityLog />
+        <WeaponGrantsCard grants={stats?.weaponGrants ?? []} />
         <MostActiveMembers />
       </div>
     </div>

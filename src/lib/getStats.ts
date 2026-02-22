@@ -1,6 +1,7 @@
 import connectDB from "@/lib/db";
 import { User } from "@/models/User";
 import { Equipment } from "@/models/Equipment";
+import { WeaponGrant } from "@/models/WeaponGrant";
 
 export interface StatsData {
   totalMembers: number;
@@ -8,6 +9,14 @@ export interface StatsData {
   avgCp: number;
   avgProgress: number;
   mostNeeded: { _id: string; name: string; type: string; count: number }[];
+  weaponGrants: {
+    _id: string;
+    userId: string;
+    userName: string;
+    weapon: string;
+    grantedByName: string;
+    grantedAt: string;
+  }[];
   leaderboard: {
     _id: string;
     name: string;
@@ -21,11 +30,18 @@ export interface StatsData {
 export async function getStats(): Promise<StatsData> {
   await connectDB();
 
-  const [totalEquipment, members] = await Promise.all([
+  const [totalEquipment, members, weaponGrantsRaw] = await Promise.all([
     Equipment.countDocuments(),
     User.find({ isOnboarded: true })
       .select("name image cp mastery gearLog")
       .populate("gearLog.equipment", "name type")
+      .lean(),
+    WeaponGrant.find()
+      .select("user weapon grantedBy grantedAt")
+      .populate("user", "name")
+      .populate("grantedBy", "name")
+      .sort({ grantedAt: -1 })
+      .limit(20)
       .lean(),
   ]);
 
@@ -110,12 +126,32 @@ export async function getStats(): Promise<StatsData> {
       gearProgress,
     }));
 
+  const weaponGrants = weaponGrantsRaw.map((grant) => {
+    const g = grant as {
+      _id: unknown;
+      user?: { _id?: unknown; name?: string };
+      weapon: string;
+      grantedBy?: { name?: string };
+      grantedAt?: Date;
+    };
+
+    return {
+      _id: String(g._id),
+      userId: String(g.user?._id || ""),
+      userName: g.user?.name || "Unknown",
+      weapon: g.weapon,
+      grantedByName: g.grantedBy?.name || "Unknown",
+      grantedAt: (g.grantedAt || new Date()).toISOString(),
+    };
+  });
+
   return {
     totalMembers,
     totalEquipment,
     avgCp,
     avgProgress,
     mostNeeded,
+    weaponGrants,
     leaderboard,
   };
 }

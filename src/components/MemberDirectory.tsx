@@ -2,8 +2,17 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MASTERY_IMAGES } from "@/lib/constants";
-import { Button, Input } from "@/components/ui";
+import { MASTERY_IMAGES, MASTERY_OPTIONS } from "@/lib/constants";
+import { useCrudMutation } from "@/hooks/useCrudMutation";
+import {
+  Button,
+  Input,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  Select,
+} from "@/components/ui";
 
 const fetcher = async <T,>(url: string): Promise<T> => {
   const res = await fetch(url);
@@ -40,7 +49,11 @@ interface Member {
 type SortKey = "name" | "cp" | "mastery" | "gearProgress";
 type SortDir = "asc" | "desc";
 
-export default function MemberDirectory() {
+export default function MemberDirectory({
+  isAdmin = false,
+}: {
+  isAdmin?: boolean;
+}) {
   const {
     data: members = [],
     isLoading: loading,
@@ -55,6 +68,20 @@ export default function MemberDirectory() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [showGiveWeaponModal, setShowGiveWeaponModal] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [selectedWeapon, setSelectedWeapon] = useState<string>(
+    MASTERY_OPTIONS[0],
+  );
+
+  const giveWeaponMutation = useCrudMutation<
+    { userId: string; weapon: string },
+    unknown
+  >({
+    method: "POST",
+    url: "/api/weapon-grants",
+    invalidateKeys: [["stats"], ["activity"]],
+  });
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -105,6 +132,28 @@ export default function MemberDirectory() {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
+  };
+
+  const openGiveWeaponModal = (member: Member) => {
+    setSelectedMember(member);
+    setSelectedWeapon(member.mastery || MASTERY_OPTIONS[0]);
+    setShowGiveWeaponModal(true);
+  };
+
+  const handleGiveWeapon = async () => {
+    if (!selectedMember || !selectedWeapon) return;
+
+    try {
+      await giveWeaponMutation.mutateAsync({
+        userId: selectedMember._id,
+        weapon: selectedWeapon,
+      });
+      setShowGiveWeaponModal(false);
+      setSelectedMember(null);
+      setSelectedWeapon(MASTERY_OPTIONS[0]);
+    } catch (error) {
+      console.error("Failed to give weapon:", error);
+    }
   };
 
   if (loading) {
@@ -225,6 +274,11 @@ export default function MemberDirectory() {
                 >
                   Gear Progress{sortIndicator("gearProgress")}
                 </th>
+                {isAdmin && (
+                  <th className="px-4 py-3 text-center text-xs font-medium text-game-text-muted uppercase tracking-wider">
+                    Action
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-game-border">
@@ -279,11 +333,29 @@ export default function MemberDirectory() {
                         </span>
                       </div>
                     </td>
+                    {isAdmin && (
+                      <td className="px-4 py-3 text-center">
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          className="cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openGiveWeaponModal(member);
+                          }}
+                        >
+                          Give weapon
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                   {/* Expanded gear details */}
                   {expandedId === member._id && (
                     <tr key={`${member._id}-details`}>
-                      <td colSpan={5} className="px-4 py-3 bg-game-darker/30">
+                      <td
+                        colSpan={isAdmin ? 6 : 5}
+                        className="px-4 py-3 bg-game-darker/30"
+                      >
                         <div className="pl-8">
                           <p className="text-xs font-medium text-game-text-muted mb-2 uppercase tracking-wider">
                             Still Needed ({member.neededCount} items)
@@ -294,19 +366,26 @@ export default function MemberDirectory() {
                             </p>
                           ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                              {member.gearLog.map((g) => (
-                                <div
-                                  key={g.equipment._id}
-                                  className="flex items-center justify-between bg-game-card/50 border border-game-border rounded px-2 py-1"
-                                >
-                                  <span className="text-xs text-game-text truncate">
-                                    {g.equipment.name}
-                                  </span>
-                                  <span className="text-xs text-game-text-muted ml-1">
-                                    ×{g.quantity}
-                                  </span>
-                                </div>
-                              ))}
+                              {member.gearLog.map((g, index) => {
+                                if (
+                                  g.equipment.type === "special" ||
+                                  index > 15
+                                )
+                                  return null;
+                                return (
+                                  <div
+                                    key={g.equipment._id}
+                                    className="flex items-center justify-between bg-game-card/50 border border-game-border rounded px-2 py-1"
+                                  >
+                                    <span className="text-xs text-game-text truncate">
+                                      {g.equipment.name}
+                                    </span>
+                                    <span className="text-xs text-game-text-muted ml-1">
+                                      ×{g.quantity}
+                                    </span>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
@@ -318,6 +397,48 @@ export default function MemberDirectory() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {isAdmin && showGiveWeaponModal && selectedMember && (
+        <Modal
+          isOpen={showGiveWeaponModal}
+          onClose={() => setShowGiveWeaponModal(false)}
+          size="md"
+        >
+          <ModalHeader onClose={() => setShowGiveWeaponModal(false)}>
+            Give weapon to {selectedMember.name}
+          </ModalHeader>
+          <ModalBody>
+            <Select
+              label="Weapon"
+              value={selectedWeapon}
+              onChange={(e) => setSelectedWeapon(e.target.value)}
+            >
+              {MASTERY_OPTIONS.map((weapon) => (
+                <option key={weapon} value={weapon}>
+                  {weapon}
+                </option>
+              ))}
+            </Select>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setShowGiveWeaponModal(false)}
+              disabled={giveWeaponMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleGiveWeapon}
+              disabled={giveWeaponMutation.isPending}
+              className="cursor-pointer"
+            >
+              {giveWeaponMutation.isPending ? "Giving..." : "Give weapon"}
+            </Button>
+          </ModalFooter>
+        </Modal>
       )}
     </div>
   );
