@@ -116,7 +116,9 @@ export default function EquipmentPage() {
       const newItems = editingItems[userId] || [];
 
       // Determine if we're editing accessories or equipment items
-      const isAccessories = editingUserKey?.startsWith("accessories-");
+      const isAccessories = editingUserKey
+        ? editingUserKey.toLowerCase().startsWith("accessories-")
+        : false;
 
       const updatePayload = isAccessories
         ? { userId, userEquipmentAccessories: newItems }
